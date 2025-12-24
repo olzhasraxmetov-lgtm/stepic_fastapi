@@ -2,6 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Config(BaseSettings):
     DATABASE_URL: str
+    SECRET_KEY: str
 
     APP_NAME: str = 'Stepic FastAPI Project'
     APP_DESCRIPTION: str = 'Stepic FastAPI Project'

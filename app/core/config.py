@@ -1,6 +1,8 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Config(BaseSettings):
+    DATABASE_URL: str
+
     APP_NAME: str = 'Stepic FastAPI Project'
     APP_DESCRIPTION: str = 'Stepic FastAPI Project'
     APP_VERSION: str = '0.0.1'

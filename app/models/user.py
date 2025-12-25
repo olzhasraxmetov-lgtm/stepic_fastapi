@@ -5,7 +5,7 @@ from app.helpers.user_role import UserRoleEnum
 from datetime import datetime
 
 
-class User(Base):
+class UserORM(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)

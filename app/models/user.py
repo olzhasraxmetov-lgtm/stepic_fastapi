@@ -1,0 +1,27 @@
+from app.core.database import Base
+from sqlalchemy import Integer, String, ForeignKey, DateTime, func, Enum
+from sqlalchemy.orm import relationship, mapped_column, Mapped
+from app.helpers.user_role import UserRoleEnum
+from datetime import datetime
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    full_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    role: Mapped[UserRoleEnum] = mapped_column(
+        Enum(UserRoleEnum),
+        default=UserRoleEnum.USER,
+        nullable=False
+    )
+    is_active: Mapped[bool] = mapped_column(default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        server_default=func.now(),
+        onupdate=func.now()
+    )

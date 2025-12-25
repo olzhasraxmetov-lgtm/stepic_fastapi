@@ -1,0 +1,42 @@
+from datetime import datetime
+
+from pydantic import BaseModel
+from pydantic import Field, EmailStr, ConfigDict
+
+from helpers.user_role import UserRoleEnum
+
+
+class UserBase(BaseModel):
+    username: str = Field(min_length=5, max_length=15, description='Имя пользователя')
+    email: EmailStr = Field(description='Email пользователя')
+    role: UserRoleEnum = UserRoleEnum.USER
+    full_name: str = Field(min_length=10, max_length=25,description='Полное имя пользователя')
+
+
+class UserCreate(UserBase):
+    hashed_password: str = Field(min_length=10, max_length=20)
+
+class UserUpdate(BaseModel):
+    username: str | None = Field(default=None, min_length=5, max_length=15)
+    email: EmailStr | None = None
+    role: UserRoleEnum | None = None
+    full_name: str | None =Field(default=None, min_length=10, max_length=25)
+
+class UserResponse(BaseModel):
+    id: id
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserPublic(BaseModel):
+    id: id
+    username: str
+    full_name: str
+
+    model_config = ConfigDict(from_attributes=True)

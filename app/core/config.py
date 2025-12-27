@@ -8,6 +8,8 @@ class Config(BaseSettings):
     APP_DESCRIPTION: str = 'Stepic FastAPI Project'
     APP_VERSION: str = '0.0.1'
 
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    ALGORITHM : str
 
     model_config = SettingsConfigDict(
         env_file='.env',

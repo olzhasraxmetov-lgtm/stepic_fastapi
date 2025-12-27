@@ -13,7 +13,7 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    hashed_password: str = Field(min_length=10, max_length=20)
+    password: str = Field(min_length=5, max_length=35)
 
 class UserUpdate(BaseModel):
     username: str | None = Field(default=None, min_length=5, max_length=15)

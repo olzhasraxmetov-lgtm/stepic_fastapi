@@ -9,7 +9,6 @@ from app.helpers.user_role import UserRoleEnum
 class UserBase(BaseModel):
     username: str = Field(min_length=5, max_length=15, description='Имя пользователя')
     email: EmailStr = Field(description='Email пользователя')
-    role: UserRoleEnum = UserRoleEnum.USER
     full_name: str = Field(min_length=10, max_length=25,description='Полное имя пользователя')
 
 
@@ -25,6 +24,7 @@ class UserUpdate(BaseModel):
 class UserResponse(UserBase):
     id: int
     is_active: bool
+    role: UserRoleEnum = UserRoleEnum.USER
     created_at: datetime
     updated_at: datetime
 

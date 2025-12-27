@@ -24,7 +24,6 @@ class UserService:
             username=user.username,
             full_name=user.full_name,
             hashed_password=hash_password(user.password),
-            role=user.role,
         )
         created_user = await self.repository.create(db_user)
         return UserResponse.model_validate(created_user)

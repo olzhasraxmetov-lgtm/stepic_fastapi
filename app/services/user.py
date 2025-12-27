@@ -1,11 +1,11 @@
 from fastapi import HTTPException
 from starlette import status
 
+from app.models.user import UserORM
 from app.repositories.user import UserRepository
 from app.schemas.user import UserCreate, UserResponse
-from app.models.user import UserORM
-
 from app.utils.security import hash_password, verify_password, create_access_token
+
 
 class UserService:
     def __init__(self, repository: UserRepository):

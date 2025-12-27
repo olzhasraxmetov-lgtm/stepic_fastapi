@@ -1,8 +1,10 @@
-from app.core.database import Base
-from sqlalchemy import Integer, String, ForeignKey, DateTime, func, Enum
-from sqlalchemy.orm import relationship, mapped_column, Mapped
-from app.helpers.user_role import UserRoleEnum
 from datetime import datetime
+
+from sqlalchemy import Integer, String, DateTime, func, Enum
+from sqlalchemy.orm import mapped_column, Mapped
+
+from app.core.database import Base
+from app.helpers.user_role import UserRoleEnum
 
 
 class UserORM(Base):

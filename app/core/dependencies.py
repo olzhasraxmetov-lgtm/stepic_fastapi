@@ -1,13 +1,15 @@
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from app.core.database import AsyncSessionLocal
 from collections.abc import AsyncGenerator
-from fastapi.security import OAuth2PasswordBearer
-from app.services.user import UserService
-from app.repositories.user import UserRepository
-from fastapi import Depends, HTTPException, status
-from app.models.user import UserORM
-from app.core.config import config
+
 import jwt
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.config import config
+from app.core.database import AsyncSessionLocal
+from app.models.user import UserORM
+from app.repositories.user import UserRepository
+from app.services.user import UserService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="user/login")
 

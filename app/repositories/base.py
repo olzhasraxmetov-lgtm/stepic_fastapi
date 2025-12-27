@@ -1,8 +1,10 @@
 from typing import Generic, TypeVar, Type
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import Base
+
 ModelType = TypeVar('ModelType', bound=Base)
 
 

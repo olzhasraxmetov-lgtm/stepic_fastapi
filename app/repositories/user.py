@@ -1,11 +1,10 @@
+from pydantic import EmailStr
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from pydantic import EmailStr
-from app.repositories.base import BaseRepository
 from app.models.user import UserORM
+from app.repositories.base import BaseRepository
 
-from sqlalchemy import select
-from app.schemas.user import UserCreate, UserResponse
 
 class UserRepository(BaseRepository):
     def __init__(self, session: AsyncSession):

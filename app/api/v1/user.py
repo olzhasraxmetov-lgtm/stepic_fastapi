@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Depends
+from fastapi.security import OAuth2PasswordRequestForm
 from starlette import status
+
+from app.core.dependencies import get_current_user
+from app.core.dependencies import get_user_service
 from app.models.user import UserORM
 from app.schemas.user import UserCreate, UserResponse
 from app.services.user import UserService
-from app.core.dependencies import get_user_service
-from app.core.dependencies import get_current_user
-from fastapi.security import OAuth2PasswordRequestForm
+
 user_router = APIRouter(
     prefix="/user",
     tags=["user"]

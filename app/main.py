@@ -1,8 +1,9 @@
-from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from app.core.config import config
+
+from fastapi import FastAPI
 
 from app.api.v1.user import user_router
+from app.core.config import config
 
 app = FastAPI(
     title=config.APP_NAME,

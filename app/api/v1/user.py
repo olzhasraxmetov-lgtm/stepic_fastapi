@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends
 from starlette import status
-
+from app.models.user import UserORM
 from app.schemas.user import UserCreate, UserResponse
 from app.services.user import UserService
 from app.core.dependencies import get_user_service
-
+from app.core.dependencies import get_current_user
+from fastapi.security import OAuth2PasswordRequestForm
 user_router = APIRouter(
     prefix="/user",
     tags=["user"]
@@ -17,3 +18,17 @@ async def register_user(
         user_service: UserService = Depends(get_user_service)
 ):
     return await user_service.register(user)
+
+@user_router.post('/login')
+async def login(
+        form: OAuth2PasswordRequestForm = Depends(),
+        user_service: UserService = Depends(get_user_service)
+):
+    return await user_service.login(form.username, form.password)
+
+@user_router.get('/profile')
+async def get_profile(
+        user: UserORM = Depends(get_current_user),
+        user_service: UserService = Depends(get_user_service),
+):
+    pass

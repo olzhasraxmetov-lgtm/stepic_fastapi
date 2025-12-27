@@ -3,7 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel
 from pydantic import Field, EmailStr, ConfigDict
 
-from helpers.user_role import UserRoleEnum
+from app.helpers.user_role import UserRoleEnum
 
 
 class UserBase(BaseModel):
@@ -22,8 +22,8 @@ class UserUpdate(BaseModel):
     role: UserRoleEnum | None = None
     full_name: str | None =Field(default=None, min_length=10, max_length=25)
 
-class UserResponse(BaseModel):
-    id: id
+class UserResponse(UserBase):
+    id: int
     is_active: bool
     created_at: datetime
     updated_at: datetime
@@ -35,7 +35,7 @@ class UserLogin(BaseModel):
     password: str
 
 class UserPublic(BaseModel):
-    id: id
+    id: int
     username: str
     full_name: str
 

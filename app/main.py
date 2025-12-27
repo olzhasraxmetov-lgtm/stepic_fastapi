@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from app.core.config import config
+
+from app.api.v1.user import user_router
+
 app = FastAPI(
     title=config.APP_NAME,
     description=config.APP_DESCRIPTION,
@@ -16,3 +19,5 @@ async def lifespan(app: FastAPI):
 @app.get('/')
 async def root():
     return {'message': 'Hello World'}
+
+app.include_router(user_router)

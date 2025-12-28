@@ -28,9 +28,9 @@ async def login(
 ):
     return await user_service.login(form.username, form.password)
 
-@user_router.get('/profile')
+@user_router.get('/my_profile', response_model=UserResponse)
 async def get_profile(
         user: UserORM = Depends(get_current_user),
         user_service: UserService = Depends(get_user_service),
 ):
-    pass
+    return await user_service.get_profile(user)

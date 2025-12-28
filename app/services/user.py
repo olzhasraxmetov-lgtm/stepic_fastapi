@@ -3,7 +3,7 @@ from starlette import status
 
 from app.models.user import UserORM
 from app.repositories.user import UserRepository
-from app.schemas.user import UserCreate, UserResponse
+from app.schemas.user import UserCreate, UserResponse, UserPublic
 from app.utils.security import hash_password, verify_password, create_access_token
 
 from loguru import logger
@@ -65,3 +65,14 @@ class UserService:
 
     async def get_profile(self, current_user: UserORM) -> UserResponse:
         return UserResponse.model_validate(current_user)
+
+    async def get_public_profile_by_id(self, user_id: int) -> UserPublic:
+        logger.debug(f'Attempting to fetch user profile by ID: {user_id}')
+        user = await self.repository.get_by_id(user_id)
+        if not user:
+            logger.warning(f"User profile not found: {user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"User with ID {user_id} not found"
+            )
+        return UserPublic.model_validate(user)

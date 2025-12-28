@@ -4,12 +4,17 @@ from fastapi import FastAPI
 
 from app.api.v1.user import user_router
 from app.core.config import config
+from app.core.logger import setup_logging
+
+
+setup_logging()
 
 app = FastAPI(
     title=config.APP_NAME,
     description=config.APP_DESCRIPTION,
     version=config.APP_VERSION
 )
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

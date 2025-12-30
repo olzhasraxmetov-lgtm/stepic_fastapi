@@ -3,7 +3,7 @@ from starlette import status
 
 from app.models.user import UserORM
 from app.repositories.user import UserRepository
-from app.schemas.user import UserCreate, UserResponse, UserPublic
+from app.schemas.user import UserCreate, UserResponse, UserPublic, UserUpdate
 from app.utils.security import hash_password, verify_password, create_access_token
 
 from loguru import logger
@@ -76,3 +76,18 @@ class UserService:
                 detail=f"User with ID {user_id} not found"
             )
         return UserPublic.model_validate(user)
+
+    async def update_profile(self, current_user: UserORM, payload: UserUpdate) -> UserResponse:
+        updated_data = payload.model_dump(exclude_unset=True)
+        logger.debug(f'Updating user profile: {current_user.id}. Fields to change: {updated_data.keys()}')
+        try:
+
+            result = await self.repository.update_profile(obj=current_user, data=updated_data)
+            logger.success(f'Updated user profile successfully: ID: {current_user.id}')
+            return UserResponse.model_validate(result)
+        except Exception:
+            logger.exception(f'Failed to update user profile: {current_user.id}')
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Something went wrong"
+            )

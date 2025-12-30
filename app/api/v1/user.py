@@ -5,7 +5,7 @@ from starlette import status
 from app.core.dependencies import get_current_user
 from app.core.dependencies import get_user_service
 from app.models.user import UserORM
-from app.schemas.user import UserCreate, UserResponse, UserPublic
+from app.schemas.user import UserCreate, UserResponse, UserPublic, UserUpdate
 from app.services.user import UserService
 
 user_router = APIRouter(
@@ -41,3 +41,11 @@ async def get_public_profile(
         user_service: UserService = Depends(get_user_service),
 ):
     return await user_service.get_public_profile_by_id(user_id)
+
+@user_router.put('/my_profile', response_model=UserResponse)
+async def update_profile(
+        user_update: UserUpdate,
+        user: UserORM = Depends(get_current_user),
+        user_service: UserService = Depends(get_user_service),
+):
+    return await user_service.update_profile(current_user=user, payload=user_update)

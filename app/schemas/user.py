@@ -18,7 +18,6 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     username: str | None = Field(default=None, min_length=5, max_length=15)
     email: EmailStr | None = None
-    role: UserRoleEnum | None = None
     full_name: str | None =Field(default=None, min_length=10, max_length=25)
 
 class UserResponse(UserBase):

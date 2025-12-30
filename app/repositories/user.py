@@ -21,3 +21,11 @@ class UserRepository(BaseRepository):
             select(UserORM).where(UserORM.email == email)
         )
         return result.first()
+
+    async def update_profile(self, obj: UserORM, data: dict) -> UserORM | None:
+        for key,value in data.items():
+            if hasattr(obj, key):
+                setattr(obj, key, value)
+        await self.session.commit()
+        await self.session.refresh(obj)
+        return obj

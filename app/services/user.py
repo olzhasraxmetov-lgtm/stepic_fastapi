@@ -7,6 +7,7 @@ from app.schemas.user import UserCreate, UserResponse, UserPublic, UserUpdate
 from app.utils.security import hash_password, verify_password, create_access_token
 
 from loguru import logger
+from app.core.exceptions import NotFoundException, ConflictException, UnauthorizedException, BadRequestException, BaseAppException
 
 class UserService:
     def __init__(self, repository: UserRepository):
@@ -17,11 +18,7 @@ class UserService:
 
         existing_user = await self.repository.get_by_email(user.email)
         if existing_user:
-            logger.warning(f'User {user.email} already exists')
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"User with email {user.email} already exists"
-            )
+            raise ConflictException(f'User with email {user.email} already exists')
 
         db_user = UserORM(
             email=str(user.email),
@@ -41,17 +38,15 @@ class UserService:
         logger.info(f'Login attempt for user_name: {user_name}')
         user = await self.repository.get_by_username(user_name)
         if user is None:
-            logger.warning(f'Login failed: User {user_name} not found')
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Incorrect username or password"
+            raise UnauthorizedException(
+                message='Incorrect username or password',
+                log_message=f'User {user_name} not found'
             )
 
         if not verify_password(password, user.hashed_password):
-            logger.warning(f"Login failed: Incorrect password for user {user_name}")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Incorrect username or password"
+            raise UnauthorizedException(
+                message="Incorrect username or password",
+                log_message=f"Login failed: Wrong password for user {user_name}"
             )
         try:
             access_token = create_access_token(
@@ -70,24 +65,20 @@ class UserService:
         logger.debug(f'Attempting to fetch user profile by ID: {user_id}')
         user = await self.repository.get_by_id(user_id)
         if not user:
-            logger.warning(f"User profile not found: {user_id}")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with ID {user_id} not found"
-            )
+            raise NotFoundException(f'User with ID {user_id} not found')
         return UserPublic.model_validate(user)
 
     async def update_profile(self, current_user: UserORM, payload: UserUpdate) -> UserResponse:
         updated_data = payload.model_dump(exclude_unset=True)
         logger.debug(f'Updating user profile: {current_user.id}. Fields to change: {updated_data.keys()}')
         try:
-
             result = await self.repository.update_profile(obj=current_user, data=updated_data)
             logger.success(f'Updated user profile successfully: ID: {current_user.id}')
             return UserResponse.model_validate(result)
-        except Exception:
+        except Exception as e:
             logger.exception(f'Failed to update user profile: {current_user.id}')
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Something went wrong"
+            raise BaseAppException(
+                message=f'Failed to update user profile',
+                log_message=f'Failed to update user profile: {current_user.id}: {str(e)}'
+
             )

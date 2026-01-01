@@ -26,3 +26,7 @@ class UnauthorizedException(BaseAppException):
 class ConflictException(BaseAppException):
     status_code=status.HTTP_409_CONFLICT
     message="Resource already exists"
+
+class ForbiddenException(BaseAppException):
+    status_code=status.HTTP_403_FORBIDDEN
+    message="Forbidden"

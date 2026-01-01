@@ -7,6 +7,7 @@ from app.core.dependencies import get_user_service
 from app.models.user import UserORM
 from app.schemas.user import UserCreate, UserResponse, UserPublic, UserUpdate
 from app.services.user import UserService
+from app.schemas.user import AdminCreate
 
 user_router = APIRouter(
     prefix="/user",
@@ -49,3 +50,10 @@ async def update_profile(
         user_service: UserService = Depends(get_user_service),
 ):
     return await user_service.update_profile(current_user=user, payload=user_update)
+
+@user_router.post('/register/admin', response_model=UserResponse)
+async def register_admin(
+        payload: AdminCreate,
+        user_service: UserService = Depends(get_user_service),
+):
+    return await user_service.create_admin(payload=payload)

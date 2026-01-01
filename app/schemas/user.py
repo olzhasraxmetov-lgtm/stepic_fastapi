@@ -39,3 +39,6 @@ class UserPublic(BaseModel):
     full_name: str
 
     model_config = ConfigDict(from_attributes=True)
+
+class AdminCreate(UserCreate):
+    admin_secret_key: str

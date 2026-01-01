@@ -5,10 +5,12 @@ from app.models.user import UserORM
 from app.repositories.user import UserRepository
 from app.schemas.user import UserCreate, UserResponse, UserPublic, UserUpdate
 from app.utils.security import hash_password, verify_password, create_access_token
-
+import os
 from loguru import logger
-from app.core.exceptions import NotFoundException, ConflictException, UnauthorizedException, BadRequestException, BaseAppException
-
+from app.core.exceptions import NotFoundException, ConflictException, UnauthorizedException, ForbiddenException, BaseAppException
+from app.helpers.user_role import UserRoleEnum
+from app.schemas.user import AdminCreate
+from app.core.config import config
 class UserService:
     def __init__(self, repository: UserRepository):
         self.repository = repository
@@ -82,3 +84,29 @@ class UserService:
                 log_message=f'Failed to update user profile: {current_user.id}: {str(e)}'
 
             )
+
+    async def create_admin(self, payload: AdminCreate ) -> UserResponse:
+        expected_key = config.ADMIN_SECRET_KEY
+
+        if payload.admin_secret_key != expected_key:
+            logger.warning(f'Failed to create admin user for email: {payload.email}')
+            raise ForbiddenException(
+                message=f'Invalid admin secret key',
+                log_message=f'Failed to create admin user for email: {payload.email}'
+            )
+
+        existing_user = await self.repository.get_by_email(payload.email)
+        if existing_user:
+            raise ConflictException(
+                f'User with email {payload.email} already exists'
+            )
+
+        hashed_password = hash_password(payload.password)
+
+        new_admin_data = payload.model_dump(exclude={"admin_secret_key", "password"})
+        new_admin_data['hashed_password'] = hashed_password
+        new_admin_data['role'] = UserRoleEnum.ADMIN
+
+        new_data = await self.repository.create(new_admin_data)
+        logger.success(f'Created new admin user: {new_data.email} (ID: {new_data.id})')
+        return UserResponse.model_validate(new_data)

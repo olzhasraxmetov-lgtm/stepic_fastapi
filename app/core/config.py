@@ -4,6 +4,8 @@ class Config(BaseSettings):
     DATABASE_URL: str
     SECRET_KEY: str
 
+    ADMIN_SECRET_KEY: str
+
     APP_NAME: str = 'Stepic FastAPI Project'
     APP_DESCRIPTION: str = 'Stepic FastAPI Project'
     APP_VERSION: str = '0.0.1'

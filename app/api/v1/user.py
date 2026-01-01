@@ -5,9 +5,10 @@ from starlette import status
 from app.core.dependencies import get_current_user
 from app.core.dependencies import get_user_service
 from app.models.user import UserORM
-from app.schemas.user import UserCreate, UserResponse, UserPublic, UserUpdate
-from app.services.user import UserService
 from app.schemas.user import AdminCreate
+from app.schemas.user import UserCreate, UserResponse, UserPublic, UserUpdate
+from app.schemas.user import UserRoleUpdate
+from app.services.user import UserService
 
 user_router = APIRouter(
     prefix="/user",
@@ -57,3 +58,12 @@ async def register_admin(
         user_service: UserService = Depends(get_user_service),
 ):
     return await user_service.create_admin(payload=payload)
+
+@user_router.patch('/admin/{user_id}/role', response_model=UserResponse)
+async def update_user_role(
+        user_id: int,
+        payload: UserRoleUpdate,
+        current_user: UserORM = Depends(get_current_user),
+        user_service: UserService = Depends(get_user_service),
+):
+    return await user_service.change_user_role(user_id=user_id, current_user=current_user, payload=payload)

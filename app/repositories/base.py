@@ -1,6 +1,6 @@
 from typing import Generic, TypeVar, Type
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import Base
@@ -23,3 +23,14 @@ class BaseRepository(Generic[ModelType]):
         await self.session.commit()
         await self.session.refresh(db_obj)
         return db_obj
+
+    async def update(self, object_id: int, data: dict) -> ModelType | None:
+        query = (
+            update(self.model)
+            .where(self.model.id == object_id)
+            .values(**data)
+            .returning(self.model)
+        )
+        result = await self.session.execute(query)
+        await self.session.commit()
+        return result.scalars().first()

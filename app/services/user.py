@@ -1,16 +1,17 @@
-from fastapi import HTTPException
-from starlette import status
+from loguru import logger
 
+from app.core.config import config
+from app.core.exceptions import NotFoundException, ConflictException, UnauthorizedException, ForbiddenException, \
+    BaseAppException
+from app.helpers.user_role import UserRoleEnum
 from app.models.user import UserORM
 from app.repositories.user import UserRepository
-from app.schemas.user import UserCreate, UserResponse, UserPublic, UserUpdate
-from app.utils.security import hash_password, verify_password, create_access_token
-import os
-from loguru import logger
-from app.core.exceptions import NotFoundException, ConflictException, UnauthorizedException, ForbiddenException, BaseAppException
-from app.helpers.user_role import UserRoleEnum
 from app.schemas.user import AdminCreate
-from app.core.config import config
+from app.schemas.user import UserCreate, UserResponse, UserPublic, UserUpdate
+from app.schemas.user import UserRoleUpdate
+from app.utils.security import hash_password, verify_password, create_access_token
+
+
 class UserService:
     def __init__(self, repository: UserRepository):
         self.repository = repository
@@ -110,3 +111,24 @@ class UserService:
         new_data = await self.repository.create(new_admin_data)
         logger.success(f'Created new admin user: {new_data.email} (ID: {new_data.id})')
         return UserResponse.model_validate(new_data)
+
+    async def change_user_role(self, user_id: int, current_user: UserORM, payload: UserRoleUpdate) -> UserResponse:
+
+        if current_user.role != UserRoleEnum.ADMIN:
+            logger.warning(f'Security: User {current_user.id} attempting to change user role for ID: {user_id}')
+            raise ForbiddenException(
+                message=f'Only admins can change user role',
+                log_message=f'Access denied for user {user_id}',
+            )
+
+        updated_user = await self.repository.update(object_id=user_id, data=payload.model_dump())
+
+        if not updated_user:
+            raise NotFoundException(
+                message=f'User with ID {user_id} not found',
+                log_message=f"Admin tried to update non-existent user {user_id}"
+            )
+
+        logger.success(f'Admin {current_user.id} updated role for user {user_id} to {payload.role}')
+
+        return UserResponse.model_validate(updated_user)

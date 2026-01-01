@@ -42,3 +42,6 @@ class UserPublic(BaseModel):
 
 class AdminCreate(UserCreate):
     admin_secret_key: str
+
+class UserRoleUpdate(BaseModel):
+    role: UserRoleEnum

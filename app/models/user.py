@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import Integer, String, DateTime, func, Enum
-from sqlalchemy.orm import mapped_column, Mapped
+from sqlalchemy.orm import mapped_column, Mapped, relationship
 
 from app.core.database import Base
 from app.helpers.user_role import UserRoleEnum
@@ -26,4 +26,10 @@ class UserORM(Base):
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now()
+    )
+
+    courses: Mapped[list['CourseORM']] = relationship(
+        'CourseORM',
+        back_populates='author',
+        cascade='all, delete-orphan',
     )

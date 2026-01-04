@@ -9,7 +9,9 @@ from app.core.config import config
 from app.core.database import AsyncSessionLocal
 from app.models.user import UserORM
 from app.repositories.user import UserRepository
+from app.repositories.course import CourseRepository
 from app.services.user import UserService
+from app.services.course import CourseService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="user/login")
 
@@ -23,6 +25,12 @@ async def get_user_repository(db: AsyncSession = Depends(get_db)) -> UserReposit
 
 async def get_user_service(repository: UserRepository = Depends(get_user_repository)) -> UserService:
     return UserService(repository=repository)
+
+async def get_course_repository(db: AsyncSession = Depends(get_db)) -> CourseRepository:
+    return CourseRepository(session=db)
+
+async def get_course_service(repository: CourseRepository = Depends(get_course_repository)) -> CourseService:
+    return CourseService(course_repo=repository)
 
 
 async def get_current_user(

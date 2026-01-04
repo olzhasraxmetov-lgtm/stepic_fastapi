@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api.v1.user import user_router
+from app.api.v1.course import course_router
 from app.core.config import config
 from app.core.logger import setup_logging
 
@@ -30,3 +31,4 @@ async def root():
     return {'message': 'Hello World'}
 
 app.include_router(user_router)
+app.include_router(course_router)

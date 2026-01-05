@@ -39,7 +39,7 @@ async def get_my_courses(
 ) -> list[CourseResponse]:
     return await course_service.get_my_courses(user.id)
 
-@course_router.put('/{course_id}', response_model=CourseResponse)
+@course_router.patch('/{course_id}', response_model=CourseResponse)
 async def update_course(
         payload: CourseUpdate,
         course_id: int,

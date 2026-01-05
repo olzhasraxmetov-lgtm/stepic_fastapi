@@ -23,14 +23,11 @@ class UserService:
         if existing_user:
             raise ConflictException(f'User with email {user.email} already exists')
 
-        db_user = UserORM(
-            email=str(user.email),
-            username=user.username,
-            full_name=user.full_name,
-            hashed_password=hash_password(user.password),
-        )
+        user_data = user.model_dump()
+        raw_password = user_data.pop('password')
+        user_data["hashed_password"] = hash_password(raw_password)
         try:
-            created_user = await self.repository.create(db_user)
+            created_user = await self.repository.create(user_data)
             logger.success(f'Created a new user: {user.email} with ID: {created_user.id}')
         except Exception:
             logger.exception(f'Failed to create new user: {user.email}')

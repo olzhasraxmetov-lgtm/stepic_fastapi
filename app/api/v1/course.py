@@ -51,3 +51,11 @@ async def update_course(
         course_id=course_id,
         payload=payload,
     )
+
+@course_router.delete('/{course_id}')
+async def delete_course(
+        course_id: int,
+        user: UserORM = Depends(get_current_user),
+        course_service: CourseService = Depends(get_course_service),
+):
+    return await course_service.delete_course(user,course_id)

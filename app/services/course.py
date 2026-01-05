@@ -67,3 +67,22 @@ class CourseService:
         updated_course = await self.course_repo.update(course_id, updated_data)
         logger.success(f'Successfully updated {course_id} by user: {current_user.id}')
         return CourseResponse.model_validate(updated_course)
+
+    async def delete_course(self, current_user: UserORM, course_id: int) -> dict:
+        db_course = await self.course_repo.get_by_id(course_id)
+
+        if not db_course:
+            raise NotFoundException(
+                message=f'Course with id {course_id} not found',
+            )
+
+        is_author = db_course.author_id == current_user.id
+        is_admin = current_user.role == UserRoleEnum.ADMIN
+
+        if not (is_author or is_admin):
+            logger.warning(f"Unauthorized delete attempt by {current_user.email}")
+            raise ForbiddenException(message="You don't have permission to delete this course")
+
+        await self.course_repo.delete_course(course_id)
+        logger.success(f'Successfully deleted {course_id} by user: {current_user.id}')
+        return {"message": "Course deleted successfully"}

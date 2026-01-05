@@ -1,6 +1,6 @@
 from typing import Sequence
 
-from sqlalchemy import select
+from sqlalchemy import select,delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.course import CourseORM
@@ -16,3 +16,8 @@ class CourseRepository(BaseRepository):
             select(CourseORM).where(CourseORM.author_id == user_id)
         )
         return result.all()
+
+    async def delete_course(self, course_id: int) -> None:
+        query = delete(CourseORM).where(CourseORM.id == course_id)
+        await self.session.execute(query)
+        await self.session.commit()

@@ -1,5 +1,5 @@
 from loguru import logger
-
+from typing import Sequence
 from app.core.exceptions import NotFoundException, ConflictException, UnauthorizedException, ForbiddenException, \
     BaseAppException
 from app.helpers.user_role import UserRoleEnum
@@ -32,4 +32,14 @@ class CourseService:
             logger.exception(f"Database error while creating course '{payload.title}': {e}")
         raise
 
+    async def get_course_by_id(self, course_id: int) -> CourseResponse:
+        course = await self.course_repo.get_by_id(course_id)
+        if not course:
+            raise NotFoundException(
+                message=f'Course with id {course_id} not found',
+            )
+        return CourseResponse.model_validate(course)
 
+    async def get_my_courses(self, user_id: int) -> list[CourseResponse]:
+        courses = await self.course_repo.get_my_courses(user_id)
+        return [CourseResponse.model_validate(course) for course in courses]

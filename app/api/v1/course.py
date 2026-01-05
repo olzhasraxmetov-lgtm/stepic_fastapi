@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from starlette import status
-
+from typing import Sequence
 from app.core.dependencies import get_course_service
 from app.core.dependencies import get_current_user
 from app.models.user import UserORM
@@ -24,3 +24,17 @@ async def create_course(
         course_service: CourseService = Depends(get_course_service),
 ):
     return await course_service.create_course(user, payload)
+
+@course_router.get('/{course_id}', response_model=CourseResponse)
+async def get_course(
+        course_id: int,
+        course_service: CourseService = Depends(get_course_service),
+):
+    return await course_service.get_course_by_id(course_id)
+
+@course_router.get('/my/', response_model=list[CourseResponse])
+async def get_my_courses(
+        user: UserORM = Depends(get_current_user),
+        course_service: CourseService = Depends(get_course_service),
+) -> list[CourseResponse]:
+    return await course_service.get_my_courses(user.id)

@@ -10,6 +10,7 @@ from app.helpers.user_role import UserRoleEnum
 class UserORM(Base):
     __tablename__ = "users"
 
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
@@ -33,3 +34,7 @@ class UserORM(Base):
         back_populates='author',
         cascade='all, delete-orphan',
     )
+
+    @property
+    def can_create_courses(self) -> bool:
+        return self.role in [UserRoleEnum.AUTHOR, UserRoleEnum.ADMIN]

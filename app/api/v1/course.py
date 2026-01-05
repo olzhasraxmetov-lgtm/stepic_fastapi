@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends
 from starlette import status
-from typing import Sequence
+
 from app.core.dependencies import get_course_service
 from app.core.dependencies import get_current_user
 from app.models.user import UserORM
-from app.schemas.course import CourseResponse, CourseCreate
+from app.schemas.course import CourseResponse, CourseCreate, CourseUpdate
 from app.services.course import CourseService
 
 course_router = APIRouter(
@@ -38,3 +38,16 @@ async def get_my_courses(
         course_service: CourseService = Depends(get_course_service),
 ) -> list[CourseResponse]:
     return await course_service.get_my_courses(user.id)
+
+@course_router.put('/{course_id}', response_model=CourseResponse)
+async def update_course(
+        payload: CourseUpdate,
+        course_id: int,
+        user: UserORM = Depends(get_current_user),
+        course_service: CourseService = Depends(get_course_service),
+):
+    return await course_service.update_course(
+        current_user=user,
+        course_id=course_id,
+        payload=payload,
+    )

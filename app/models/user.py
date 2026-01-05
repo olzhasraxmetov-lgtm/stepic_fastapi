@@ -38,3 +38,11 @@ class UserORM(Base):
     @property
     def can_create_courses(self) -> bool:
         return self.role in [UserRoleEnum.AUTHOR, UserRoleEnum.ADMIN]
+
+    @property
+    def is_admin(self) -> bool:
+        return self.role == UserRoleEnum.ADMIN
+
+    @property
+    def is_author(self) -> bool:
+        return self.role == UserRoleEnum.AUTHOR

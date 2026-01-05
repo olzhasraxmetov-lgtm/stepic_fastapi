@@ -30,7 +30,7 @@ async def get_course(
         course_id: int,
         course_service: CourseService = Depends(get_course_service),
 ):
-    return await course_service.get_course_by_id(course_id)
+    return await course_service.get_by_id(course_id)
 
 @course_router.get('/my/', response_model=list[CourseResponse])
 async def get_my_courses(
@@ -59,3 +59,11 @@ async def delete_course(
         course_service: CourseService = Depends(get_course_service),
 ):
     return await course_service.delete_course(user,course_id)
+
+@course_router.post('/{course_id}/publish')
+async def publish_course(
+        course_id: int,
+        user: UserORM = Depends(get_current_user),
+        course_service: CourseService = Depends(get_course_service),
+):
+    return await course_service.publish_course(user,course_id)

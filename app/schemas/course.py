@@ -28,3 +28,9 @@ class CourseResponse(CourseBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class CourseList(BaseModel):
+    items: list[CourseResponse]
+    page: int
+    per_page: int
+    total: int

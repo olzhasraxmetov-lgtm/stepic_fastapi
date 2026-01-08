@@ -1,10 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from starlette import status
-
 from app.core.dependencies import get_course_service
 from app.core.dependencies import get_current_user
 from app.models.user import UserORM
-from app.schemas.course import CourseResponse, CourseCreate, CourseUpdate
+from app.schemas.course import CourseResponse, CourseCreate, CourseUpdate, CourseList
 from app.services.course import CourseService
 
 course_router = APIRouter(
@@ -12,9 +11,20 @@ course_router = APIRouter(
     tags=["course"]
 )
 
-@course_router.get('/')
-async def get_courses():
-    return 'Courses'
+@course_router.get('/', response_model=CourseList)
+async def get_courses(
+        page: int = Query(1, ge=1),
+        per_page: int = Query(20, ge=1, le=100),
+        min_price: float | None = Query(None, ge=0, description='Минимальная цена товара'),
+        max_price: float | None = Query(None, ge=0, description='Максимальная цена товара'),
+        course_service: CourseService = Depends(get_course_service),
+) -> CourseList:
+    return await course_service.get_paginated_courses(
+        page=page,
+        per_page=per_page,
+        min_price=min_price,
+        max_price=max_price,
+    )
 
 
 @course_router.post('/', status_code=status.HTTP_201_CREATED, response_model=CourseResponse)

@@ -4,17 +4,38 @@ from typing import Sequence
 from sqlalchemy.sql.functions import current_user
 
 from app.core.exceptions import NotFoundException, ConflictException, UnauthorizedException, ForbiddenException, \
-    BaseAppException
+    BaseAppException, BadRequestException
 from app.helpers.user_role import UserRoleEnum
 from app.models.course import CourseORM
 from app.models.user import UserORM
 from app.schemas.course import CourseCreate, CourseResponse, CourseUpdate
 from app.repositories.course import CourseRepository
+from app.schemas.course import CourseList
+from fastapi import Query
 
 class CourseService:
 
     def __init__(self, course_repo: CourseRepository):
         self.course_repo = course_repo
+
+    async def get_paginated_courses(
+            self,
+            page: int,
+            per_page: int,
+            min_price: float | None,
+            max_price: float | None,
+    ):
+        if min_price is not None and max_price is not None and min_price > max_price:
+            raise BadRequestException(
+                message='Min price can\'t be higher than max price'
+            )
+
+        return await self.course_repo.get_paginated_courses_with_filters(
+            page=page,
+            per_page=per_page,
+            min_price=min_price,
+            max_price=max_price,
+        )
 
     async def _get_course_or_404(self, course_id: int) -> CourseORM:
         course = await self.course_repo.get_by_id(course_id)

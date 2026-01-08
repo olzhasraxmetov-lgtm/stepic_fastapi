@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from starlette import status
+
 from app.core.dependencies import get_course_service
 from app.core.dependencies import get_current_user
 from app.models.user import UserORM

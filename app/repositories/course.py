@@ -1,8 +1,8 @@
 from typing import Sequence
 
-from sqlalchemy import select,delete, func
+from sqlalchemy import select, delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Query
+
 from app.models.course import CourseORM
 from app.repositories.base import BaseRepository
 

@@ -1,17 +1,13 @@
 from loguru import logger
-from typing import Sequence
 
-from sqlalchemy.sql.functions import current_user
-
-from app.core.exceptions import NotFoundException, ConflictException, UnauthorizedException, ForbiddenException, \
-    BaseAppException, BadRequestException
+from app.core.exceptions import NotFoundException, ForbiddenException, \
+    BadRequestException
 from app.helpers.user_role import UserRoleEnum
 from app.models.course import CourseORM
 from app.models.user import UserORM
-from app.schemas.course import CourseCreate, CourseResponse, CourseUpdate
 from app.repositories.course import CourseRepository
-from app.schemas.course import CourseList
-from fastapi import Query
+from app.schemas.course import CourseCreate, CourseResponse, CourseUpdate
+
 
 class CourseService:
 

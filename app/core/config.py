@@ -13,8 +13,16 @@ class Config(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     ALGORITHM : str
 
+    REDIS_HOST: str = 'localhost'
+    REDIS_PORT: int = 6379
+
+    @property
+    def REDIS_URL(self) -> str:
+        return f'redis://{self.REDIS_HOST}:{self.REDIS_PORT}'
+
     model_config = SettingsConfigDict(
         env_file='.env',
+        extra='ignore',
         env_file_encoding='utf-8',
     )
 

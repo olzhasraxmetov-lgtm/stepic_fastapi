@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from redis import asyncio as redis_asyncio
 from fastapi_cache.backends.redis import RedisBackend
-from fastapi_cache import FastAPICache
+from fastapi_cache import FastAPICache, JsonCoder
 from app.api.v1.user import user_router
 from app.api.v1.course import course_router
 from app.core.config import config
@@ -19,14 +19,14 @@ setup_logging()
 async def lifespan(app: FastAPI):
     print('App is starting. Initializing resources')
 
-    redis = redis_asyncio.from_url(config.REDIS_URL,decode_responses=True)
+    redis = redis_asyncio.from_url(config.REDIS_URL)
 
     try:
         await redis.ping()
         print('Redis connection established')
         FastAPICache.init(
             RedisBackend(redis),
-            prefix='fastapi-cache',
+            coder=JsonCoder,
         )
         await FastAPILimiter.init(redis)
         print('FastAPILimiter established')

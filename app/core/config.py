@@ -13,7 +13,7 @@ class Config(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     ALGORITHM : str
 
-    REDIS_HOST: str = 'localhost'
+    REDIS_HOST: str = 'redis'
     REDIS_PORT: int = 6379
 
     @property

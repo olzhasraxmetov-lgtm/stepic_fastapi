@@ -1,7 +1,7 @@
 from collections.abc import AsyncGenerator
 
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,6 +14,9 @@ from app.services.user import UserService
 from app.services.course import CourseService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="user/login")
+
+async def service_http_user_id(request: Request):
+    return request.client.host
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:

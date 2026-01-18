@@ -1,7 +1,7 @@
 import pytest_asyncio
-from sqlalchemy import select
-from app.models.user import UserORM
+
 from app.helpers.user_role import UserRoleEnum
+from app.models.user import UserORM
 
 
 @pytest_asyncio.fixture

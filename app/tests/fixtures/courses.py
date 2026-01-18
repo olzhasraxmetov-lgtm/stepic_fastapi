@@ -1,5 +1,7 @@
-import pytest_asyncio
 from decimal import Decimal
+
+import pytest_asyncio
+
 from app.models.course import CourseORM
 
 

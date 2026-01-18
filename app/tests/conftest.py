@@ -1,20 +1,18 @@
-import pytest
-import asyncio
-
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from redis.asyncio import from_url
+from fastapi import FastAPI
 from fastapi_cache import FastAPICache, JsonCoder
 from fastapi_cache.backends.redis import RedisBackend
 from fastapi_limiter import FastAPILimiter
+from fastapi_limiter.depends import RateLimiter
 from httpx import AsyncClient, ASGITransport
+from redis.asyncio import from_url
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from fastapi import FastAPI
+
 from app.core.database import Base
 from app.core.dependencies import get_current_user, get_db
 from app.main import app as prod_app
 
-from fastapi_limiter.depends import RateLimiter
 
 async def mock_rate_limiter_call(self, request=None, response=None):
     return None

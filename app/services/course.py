@@ -36,7 +36,7 @@ class CourseService:
     async def _get_course_or_404(self, course_id: int) -> CourseORM:
         course = await self.course_repo.get_by_id(course_id)
         if not course:
-            raise NotFoundException(message=f'Course with id {course_id} not found')
+            raise NotFoundException(message=f'Course not found')
         return course
 
     def _check_course_access(self, course: CourseORM, user: UserORM) -> None:

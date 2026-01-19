@@ -14,7 +14,7 @@ from app.repositories.user import UserRepository
 from app.services.course import CourseService
 from app.services.lesson import LessonService
 from app.services.user import UserService
-
+from app.core.exceptions import NotFoundException
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="user/login")
 
 async def service_http_user_id(request: Request):
@@ -68,5 +68,12 @@ async def get_current_user(
     return user
 
 
-
+async def validation_course_id(
+        course_id: int,
+        course_repo: CourseRepository = Depends(get_course_repository)
+):
+    course = await course_repo.get_by_id(course_id)
+    if not course:
+        raise NotFoundException(message="Course not found")
+    return course
 

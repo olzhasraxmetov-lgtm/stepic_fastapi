@@ -12,13 +12,14 @@ from app.helpers.courses.cache_utils import item_key_builder
 from app.models.user import UserORM
 from app.schemas.course import CourseResponse, CourseCreate, CourseUpdate, CourseList
 from app.services.course import CourseService
-
+from app.api.v1.lesson import lesson_router
 course_router = APIRouter(
-    prefix="/course",
-    tags=["course"]
+    prefix="/courses",
 )
 
-@course_router.get('/', response_model=CourseList)
+
+
+@course_router.get('/', response_model=CourseList, tags=["Courses"])
 @cache(expire=60, namespace="courses", coder=PickleCoder)
 async def get_courses(
         page: int = Query(1, ge=1),
@@ -34,7 +35,7 @@ async def get_courses(
          max_price=max_price,
      )
 
-@course_router.post('/', status_code=status.HTTP_201_CREATED, response_model=CourseResponse, dependencies=[Depends(RateLimiter(times=2, minutes=1, identifier=service_http_user_id))])
+@course_router.post('/', status_code=status.HTTP_201_CREATED, response_model=CourseResponse, dependencies=[Depends(RateLimiter(times=2, minutes=1, identifier=service_http_user_id))], tags=["Courses"])
 async def create_course(
         payload: CourseCreate,
         user: UserORM = Depends(get_current_user),
@@ -44,7 +45,7 @@ async def create_course(
     await invalidate_cache()
     return result
 
-@course_router.get('/my/', response_model=list[CourseResponse], dependencies=[Depends(RateLimiter(times=5, seconds=10, identifier=service_http_user_id))])
+@course_router.get('/my/', response_model=list[CourseResponse], dependencies=[Depends(RateLimiter(times=5, seconds=10, identifier=service_http_user_id))], tags=["Courses"])
 async def get_my_courses(
         user: UserORM = Depends(get_current_user),
         course_service: CourseService = Depends(get_course_service),
@@ -52,7 +53,7 @@ async def get_my_courses(
     return await course_service.get_my_courses(user.id)
 
 @course_router.patch('/{course_id}', response_model=CourseResponse,
-                     dependencies=[Depends(RateLimiter(times=5, minutes=1, identifier=service_http_user_id))])
+                     dependencies=[Depends(RateLimiter(times=5, minutes=1, identifier=service_http_user_id))], tags=["Courses"])
 async def update_course(
         payload: CourseUpdate,
         course_id: int,
@@ -69,7 +70,7 @@ async def update_course(
 
     return result
 
-@course_router.delete('/{course_id}', dependencies=[Depends(RateLimiter(times=2, minutes=1, identifier=service_http_user_id))])
+@course_router.delete('/{course_id}', dependencies=[Depends(RateLimiter(times=2, minutes=1, identifier=service_http_user_id))], tags=["Courses"])
 async def delete_course(
         course_id: int,
         user: UserORM = Depends(get_current_user),
@@ -79,7 +80,7 @@ async def delete_course(
     await invalidate_cache(course_id=course_id)
     return result
 
-@course_router.post('/{course_id}/publish', dependencies=[Depends(RateLimiter(times=2, minutes=1, identifier=service_http_user_id))])
+@course_router.post('/{course_id}/publish', dependencies=[Depends(RateLimiter(times=2, minutes=1, identifier=service_http_user_id))], tags=["Courses"])
 async def publish_course(
         course_id: int,
         user: UserORM = Depends(get_current_user),
@@ -91,10 +92,12 @@ async def publish_course(
 
 
 
-@course_router.get('/{course_id}', response_model=CourseResponse,)
+@course_router.get('/{course_id}', response_model=CourseResponse,tags=["Courses"])
 @cache(expire=60, namespace='courses', key_builder=item_key_builder, coder=PickleCoder)
 async def get_course(
         course_id: int,
         course_service: CourseService = Depends(get_course_service),
 ):
     return await course_service.get_by_id(course_id)
+
+course_router.include_router(lesson_router, tags=["Lessons"])

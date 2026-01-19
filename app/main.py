@@ -6,6 +6,7 @@ from fastapi_cache.backends.redis import RedisBackend
 from fastapi_cache import FastAPICache, JsonCoder
 from app.api.v1.user import user_router
 from app.api.v1.course import course_router
+from app.api.v1.lesson import lesson_router
 from app.core.config import config
 from app.core.logger import setup_logging
 from fastapi_limiter import FastAPILimiter
@@ -51,3 +52,4 @@ async def root():
 
 app.include_router(user_router)
 app.include_router(course_router)
+app.include_router(lesson_router)

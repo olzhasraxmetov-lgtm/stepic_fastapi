@@ -1,17 +1,22 @@
-from loguru import logger
-
 from app.core.exceptions import NotFoundException, ForbiddenException, \
     BadRequestException
 from app.models.course import CourseORM
 from app.models.user import UserORM
 from app.repositories.lesson import LessonRepository
-from app.schemas.lesson import LessonCreate, LessonResponse
+from app.schemas.lesson import LessonCreate, LessonResponse, LessonUpdate
 from app.services.course import CourseService
+from app.models.lesson import LessonORM
 
 class LessonService:
     def __init__(self, lesson_repo: LessonRepository):
         self.lesson_repo = lesson_repo
 
+
+    async def get_lesson_or_404(self, lesson_id: int) -> LessonORM:
+        lesson_db: LessonORM = await self.lesson_repo.get_by_id(lesson_id)
+        if not lesson_db:
+            raise NotFoundException(message=f'Lesson not found')
+        return lesson_db
 
     async def create_lesson(self, course: CourseORM, current_user: UserORM, payload: LessonCreate):
         if course.author_id != current_user.id:
@@ -25,3 +30,12 @@ class LessonService:
         lesson_data['course_id'] = course.id
 
         return await self.lesson_repo.create(lesson_data)
+
+    async def update_lesson(self, lesson_id: int ,course: CourseORM, payload: LessonUpdate):
+        lesson_db: LessonORM = await self.get_lesson_or_404(lesson_id)
+        if not lesson_db or lesson_db.course_id != course.id:
+            raise NotFoundException(message=f'Lesson {lesson_id} not found in the course {course.id}')
+
+        data = payload.model_dump(exclude_unset=True)
+
+        return await self.lesson_repo.update(object_id=lesson_id, data=data)

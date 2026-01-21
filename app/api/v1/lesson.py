@@ -9,7 +9,7 @@ from app.services.lesson import LessonService
 from app.models.user import UserORM
 from app.core.dependencies import validation_course_id
 from app.models.course import CourseORM
-
+from app.core.dependencies import get_course_with_access
 lesson_router = APIRouter(
     prefix="/{course_id}/lessons",
 )
@@ -28,3 +28,12 @@ async def create_lesson(
         current_user: UserORM = Depends(get_current_user)
 ):
     return await lessons_service.create_lesson(payload=payload, current_user=current_user, course=course)
+
+@lesson_router.patch('/{lesson_id}', tags=["Lessons"], response_model=LessonResponse)
+async def update_lesson(
+        lesson_id: int,
+        payload: LessonUpdate,
+        course: CourseORM = Depends(get_course_with_access),
+        lesson_service: LessonService = Depends(get_lesson_service),
+):
+    return await lesson_service.update_lesson(payload=payload, course=course, lesson_id=lesson_id)

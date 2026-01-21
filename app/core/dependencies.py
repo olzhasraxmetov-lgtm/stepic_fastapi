@@ -4,7 +4,7 @@ import jwt
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from loguru import logger
 from app.core.config import config
 from app.core.database import AsyncSessionLocal
 from app.models.user import UserORM
@@ -15,6 +15,10 @@ from app.services.course import CourseService
 from app.services.lesson import LessonService
 from app.services.user import UserService
 from app.core.exceptions import NotFoundException
+from app.models.course import CourseORM
+
+from app.core.exceptions import ForbiddenException
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="user/login")
 
 async def service_http_user_id(request: Request):
@@ -77,3 +81,11 @@ async def validation_course_id(
         raise NotFoundException(message="Course not found")
     return course
 
+async def get_course_with_access(
+        course: CourseORM = Depends(validation_course_id),
+        user: UserORM = Depends(get_current_user)
+) -> CourseORM:
+    if not (user.is_admin or course.author_id == user.id):
+        logger.warning(f'User {user.id} tried to access course {course.id}')
+        raise ForbiddenException(message="You don't have permission")
+    return course

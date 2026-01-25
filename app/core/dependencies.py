@@ -49,7 +49,7 @@ async def get_lesson_service(repository: LessonRepository = Depends(get_lesson_r
 
 async def get_current_user(
         token: str = Depends(oauth2_scheme),
-        user_service: UserService = Depends(get_user_service)  # Используем уже готовый сервис
+        user_service: UserService = Depends(get_user_service)
 ) -> UserORM:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -65,7 +65,6 @@ async def get_current_user(
     except (jwt.PyJWTError, jwt.ExpiredSignatureError):
         raise credentials_exception
 
-    # Делегируем поиск пользователя сервису
     user = await user_service.repository.get_by_username(username)
     if not user:
         raise credentials_exception

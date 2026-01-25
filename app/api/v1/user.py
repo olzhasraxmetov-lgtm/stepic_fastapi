@@ -52,7 +52,7 @@ async def update_profile(
 ):
     return await user_service.update_profile(current_user=user, payload=user_update)
 
-@user_router.post('/register/admin', response_model=UserResponse)
+@user_router.post('/register/admin', response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register_admin(
         payload: AdminCreate,
         user_service: UserService = Depends(get_user_service),

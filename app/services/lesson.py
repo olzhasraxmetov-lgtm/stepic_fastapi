@@ -1,12 +1,12 @@
-from app.core.exceptions import NotFoundException, ForbiddenException, \
-    BadRequestException
+from loguru import logger
+
+from app.core.exceptions import NotFoundException, ForbiddenException
 from app.models.course import CourseORM
+from app.models.lesson import LessonORM
 from app.models.user import UserORM
 from app.repositories.lesson import LessonRepository
-from app.schemas.lesson import LessonCreate, LessonResponse, LessonUpdate
-from app.services.course import CourseService
-from app.models.lesson import LessonORM
-from loguru import logger
+from app.schemas.lesson import LessonCreate, LessonUpdate
+
 
 class LessonService:
     def __init__(self, lesson_repo: LessonRepository):

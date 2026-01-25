@@ -1,9 +1,9 @@
 import pytest
-from decimal import Decimal
-from app.models.user import UserORM
-from sqlalchemy import update, select
-from app.helpers.user_role import UserRoleEnum
+from sqlalchemy import select
+
 from app.core.config import config
+from app.helpers.user_role import UserRoleEnum
+from app.models.user import UserORM
 
 
 @pytest.mark.asyncio

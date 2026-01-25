@@ -92,8 +92,6 @@ async def test_create_and_get_course(client, test_author):
     }
 
     response = await client.post('/course/', json=course_data)
-    if response.status_code == 422:
-        print(response.json())
     assert response.status_code == 201
 
     data = response.json()

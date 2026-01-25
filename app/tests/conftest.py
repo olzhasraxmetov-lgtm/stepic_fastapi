@@ -106,7 +106,17 @@ async def client(app_test: FastAPI, test_author, clear_cache):
     app_test.dependency_overrides.pop(get_current_user, None)
 
 @pytest_asyncio.fixture
+async def unauth_client(app_test: FastAPI, clear_cache):
+    """Не авторизированный клиент"""
+    async with AsyncClient(
+            transport=ASGITransport(app=app_test),
+            base_url="http://testserver"
+    ) as c:
+        yield c
+
+@pytest_asyncio.fixture
 async def user_client(app_test: FastAPI, test_regular_user):
+    """Клиент, который всегда авторизован как Обычный пользователь"""
     app_test.dependency_overrides[get_current_user] = lambda: test_regular_user
 
     async with AsyncClient(transport=ASGITransport(app=app_test), base_url="http://testserver") as c:
@@ -124,3 +134,12 @@ async def user_client(app_test: FastAPI, test_regular_user):
 #         yield c
 #
 #     app_test.dependency_overrides.pop(get_current_user, None)
+
+
+@pytest_asyncio.fixture
+async def admin_client(app_test: FastAPI, test_admin):
+    """Клиент, который всегда авторизован как Админ"""
+    app_test.dependency_overrides[get_current_user] = lambda: test_admin
+    async with AsyncClient(transport=ASGITransport(app=app_test), base_url="http://testserver") as c:
+        yield c
+    app_test.dependency_overrides.pop(get_current_user, None)

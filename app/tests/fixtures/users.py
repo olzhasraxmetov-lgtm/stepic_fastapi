@@ -2,7 +2,7 @@ import pytest_asyncio
 
 from app.helpers.user_role import UserRoleEnum
 from app.models.user import UserORM
-
+from app.utils.security import hash_password
 
 @pytest_asyncio.fixture
 async def test_author(db_session):
@@ -12,7 +12,7 @@ async def test_author(db_session):
         role=UserRoleEnum.AUTHOR,
         is_active=True,
         full_name="Olzhas Author",
-        hashed_password="fake_hashed_password"
+        hashed_password=hash_password('fake_hashed_password'),
     )
     db_session.add(user)
     await db_session.commit()
@@ -28,7 +28,7 @@ async def test_regular_user(db_session):
         role=UserRoleEnum.USER,
         is_active=True,
         full_name="Olzhas Regular User",
-        hashed_password="fake_hashed_password"
+        hashed_password=hash_password('fake_hashed_password'),
     )
     db_session.add(user)
     await db_session.commit()
@@ -45,7 +45,7 @@ async def test_admin(db_session):
         role=UserRoleEnum.ADMIN,
         is_active=True,
         full_name="Test Admin",
-        hashed_password="fake_hashed_password"
+        hashed_password=hash_password('fake_hashed_password'),
     )
     db_session.add(user)
     await db_session.commit()

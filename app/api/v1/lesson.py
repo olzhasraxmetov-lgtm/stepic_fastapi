@@ -37,3 +37,11 @@ async def update_lesson(
         lesson_service: LessonService = Depends(get_lesson_service),
 ):
     return await lesson_service.update_lesson(payload=payload, course=course, lesson_id=lesson_id)
+
+@lesson_router.delete('/{lesson_id}', tags=["Lessons"], status_code=status.HTTP_200_OK)
+async def delete_lesson(
+        lesson_id: int,
+        course: CourseORM = Depends(get_course_with_access),
+        lesson_service: LessonService = Depends(get_lesson_service),
+):
+    return await lesson_service.delete_lesson(course=course, lesson_id=lesson_id)

@@ -1,6 +1,6 @@
 from typing import Generic, TypeVar, Type
 
-from sqlalchemy import select, update
+from sqlalchemy import select, update, delete as sqlalchemy_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import Base
@@ -23,6 +23,11 @@ class BaseRepository(Generic[ModelType]):
         await self.session.commit()
         await self.session.refresh(db_obj)
         return db_obj
+
+    async def delete(self, object_id: int) -> None:
+        query = sqlalchemy_delete(self.model).where(self.model.id == object_id)
+        await self.session.execute(query)
+        await self.session.commit()
 
     async def update(self, object_id: int, data: dict) -> ModelType | None:
         query = (

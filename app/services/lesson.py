@@ -6,6 +6,7 @@ from app.repositories.lesson import LessonRepository
 from app.schemas.lesson import LessonCreate, LessonResponse, LessonUpdate
 from app.services.course import CourseService
 from app.models.lesson import LessonORM
+from loguru import logger
 
 class LessonService:
     def __init__(self, lesson_repo: LessonRepository):
@@ -31,11 +32,24 @@ class LessonService:
 
         return await self.lesson_repo.create(lesson_data)
 
+    async def check_lesson_belongs_to_course(self, course: CourseORM, lesson: LessonORM) -> bool:
+        if not lesson or lesson.course_id != course.id:
+            raise NotFoundException(message=f'Lesson {lesson.id} not found in the course {course.id}')
+        return True
+
     async def update_lesson(self, lesson_id: int ,course: CourseORM, payload: LessonUpdate):
         lesson_db: LessonORM = await self.get_lesson_or_404(lesson_id)
-        if not lesson_db or lesson_db.course_id != course.id:
-            raise NotFoundException(message=f'Lesson {lesson_id} not found in the course {course.id}')
+        await self.check_lesson_belongs_to_course(course, lesson_db)
 
         data = payload.model_dump(exclude_unset=True)
 
         return await self.lesson_repo.update(object_id=lesson_id, data=data)
+
+    async def delete_lesson(self, lesson_id: int, course: CourseORM) -> dict:
+        lesson_db: LessonORM = await self.get_lesson_or_404(lesson_id)
+        await self.check_lesson_belongs_to_course(course, lesson_db)
+
+        await self.lesson_repo.delete(lesson_id)
+        logger.success(f'Successfully deleted {lesson_id} by user: {course.author_id}')
+        return {"message": "Lesson deleted successfully"}
+

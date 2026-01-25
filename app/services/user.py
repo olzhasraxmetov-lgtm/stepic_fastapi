@@ -72,6 +72,7 @@ class UserService:
         updated_data = payload.model_dump(exclude_unset=True)
         logger.debug(f'Updating user profile: {current_user.id}. Fields to change: {updated_data.keys()}')
         try:
+            current_user = await self.repository.session.merge(current_user)
             result = await self.repository.update_profile(obj=current_user, data=updated_data)
             logger.success(f'Updated user profile successfully: ID: {current_user.id}')
             return UserResponse.model_validate(result)

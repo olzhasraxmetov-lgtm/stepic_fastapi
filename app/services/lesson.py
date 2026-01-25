@@ -53,3 +53,5 @@ class LessonService:
         logger.success(f'Successfully deleted {lesson_id} by user: {course.author_id}')
         return {"message": "Lesson deleted successfully"}
 
+    async def get_all_lessons(self, course_id: int):
+        return await self.lesson_repo.get_all_lessons(course_id)

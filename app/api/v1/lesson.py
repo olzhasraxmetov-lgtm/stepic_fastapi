@@ -15,9 +15,12 @@ lesson_router = APIRouter(
 )
 
 
-@lesson_router.get('/', tags=["Lessons"])
-async def get_lessons():
-    pass
+@lesson_router.get('/', tags=["Lessons"], response_model=list[LessonResponse])
+async def get_lessons(
+        course: CourseORM = Depends(validation_course_id),
+        lessons_service: LessonService = Depends(get_lesson_service),
+):
+    return await lessons_service.get_all_lessons(course.id)
 
 
 @lesson_router.post('/', tags=["Lessons"])

@@ -18,6 +18,8 @@ from app.core.exceptions import NotFoundException
 from app.models.course import CourseORM
 
 from app.core.exceptions import ForbiddenException
+from app.repositories.purchase import PurchaseRepository
+from app.services.purchase import PurchaseService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="user/login")
 
@@ -46,6 +48,11 @@ async def get_lesson_repository(db: AsyncSession = Depends(get_db)) -> LessonRep
 async def get_lesson_service(repository: LessonRepository = Depends(get_lesson_repository)) -> LessonService:
     return LessonService(lesson_repo=repository)
 
+async def get_purchase_repository(db: AsyncSession = Depends(get_db)) -> PurchaseRepository:
+    return PurchaseRepository(session=db)
+
+async def get_purchase_service(repository: PurchaseRepository) -> PurchaseService:
+    return PurchaseService(purchase_repo=repository)
 
 async def get_current_user(
         token: str = Depends(oauth2_scheme),

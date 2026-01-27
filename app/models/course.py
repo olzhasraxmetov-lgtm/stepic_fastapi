@@ -37,3 +37,8 @@ class CourseORM(Base):
         back_populates='course',
         cascade='all, delete-orphan',
     )
+    
+    purchases: Mapped[list['PurchaseORM']] = relationship(
+        'PurchaseORM',
+        back_populates='course',
+    )

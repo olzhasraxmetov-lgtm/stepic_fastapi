@@ -35,6 +35,11 @@ class UserORM(Base):
         cascade='all, delete-orphan',
     )
 
+    purchases: Mapped[list['PurchaseORM']] = relationship(
+        'PurchaseORM',
+        back_populates='user',
+    )
+
     @property
     def can_create_courses(self) -> bool:
         return self.role in [UserRoleEnum.AUTHOR, UserRoleEnum.ADMIN]

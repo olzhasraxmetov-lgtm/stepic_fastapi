@@ -3,7 +3,7 @@ from fastapi_cache.coder import PickleCoder
 from fastapi_cache.decorator import cache
 from fastapi_limiter.depends import RateLimiter
 from starlette import status
-
+from app.api.v1.purchase import purchase_router
 from app.core.dependencies import get_course_service
 from app.core.dependencies import get_current_user
 from app.core.dependencies import service_http_user_id

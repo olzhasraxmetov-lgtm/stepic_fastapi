@@ -24,4 +24,4 @@ class PurchaseORM(Base):
     price_paid: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
 
     user: Mapped['UserORM'] = relationship("UserORM", back_populates="purchases")
-    course: Mapped['PurchaseORM'] = relationship("PurchaseORM", back_populates="purchases")
+    course: Mapped['CourseORM'] = relationship("CourseORM", back_populates="purchases")

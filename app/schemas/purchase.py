@@ -3,11 +3,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field, ConfigDict
 
-from app.models.course import CourseORM
-
-
-class PurchaseBase(BaseModel):
-    course: CourseORM
+from app.helpers.purchase_status import PurchaseStatus
 
 class PurchaseResponse(BaseModel):
     id: int = Field(..., description="ID покупки")
@@ -27,8 +23,10 @@ class CourseShortInfo(BaseModel):
 
 class PurchaseDetailResponse(BaseModel):
     id: int
-    purchase_date: datetime
     price_paid: Decimal
+    status: PurchaseStatus
+    purchase_date: datetime
     course: CourseShortInfo
+    payment_id: str
 
     model_config = ConfigDict(from_attributes=True)

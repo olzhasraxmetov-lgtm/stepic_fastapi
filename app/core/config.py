@@ -16,6 +16,10 @@ class Config(BaseSettings):
     REDIS_HOST: str = 'redis'
     REDIS_PORT: int = 6379
 
+    YOOKASSA_SHOP_ID: str
+    YOOKASSA_API_SECRET_KEY: str
+    YOOKASSA_RETURN_URL: str
+
     @property
     def REDIS_URL(self) -> str:
         return f'redis://{self.REDIS_HOST}:{self.REDIS_PORT}'

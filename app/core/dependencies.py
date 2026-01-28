@@ -3,23 +3,23 @@ from collections.abc import AsyncGenerator
 import jwt
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.ext.asyncio import AsyncSession
 from loguru import logger
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.config import config
 from app.core.database import AsyncSessionLocal
+from app.core.exceptions import ForbiddenException
+from app.core.exceptions import NotFoundException
+from app.models.course import CourseORM
 from app.models.user import UserORM
 from app.repositories.course import CourseRepository
 from app.repositories.lesson import LessonRepository
+from app.repositories.purchase import PurchaseRepository
 from app.repositories.user import UserRepository
 from app.services.course import CourseService
 from app.services.lesson import LessonService
-from app.services.user import UserService
-from app.core.exceptions import NotFoundException
-from app.models.course import CourseORM
-
-from app.core.exceptions import ForbiddenException
-from app.repositories.purchase import PurchaseRepository
 from app.services.purchase import PurchaseService
+from app.services.user import UserService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="user/login")
 
@@ -51,8 +51,13 @@ async def get_lesson_service(repository: LessonRepository = Depends(get_lesson_r
 async def get_purchase_repository(db: AsyncSession = Depends(get_db)) -> PurchaseRepository:
     return PurchaseRepository(session=db)
 
-async def get_purchase_service(repository: PurchaseRepository) -> PurchaseService:
-    return PurchaseService(purchase_repo=repository)
+async def get_purchase_service(repository: PurchaseRepository = Depends(get_purchase_repository),
+                               course_repo: CourseRepository = Depends(get_course_repository)) -> PurchaseService:
+    return PurchaseService(purchase_repo=repository,
+                           course_repo=course_repo,
+                           shop_id=config.YOOKASSA_SHOP_ID,
+                           secret_key=config.YOOKASSA_API_SECRET_KEY
+                           )
 
 async def get_current_user(
         token: str = Depends(oauth2_scheme),

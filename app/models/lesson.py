@@ -15,21 +15,26 @@ class LessonORM(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
 
     title: Mapped[str] = mapped_column(String(80), nullable=False)
-    content: Mapped[Text] = mapped_column(Text, nullable=False)
 
-    order_number: Mapped[int] = mapped_column(Integer,nullable=False)
     duration_minutes: Mapped[int] = mapped_column(Integer, nullable=True)
-
+    order_number: Mapped[int] = mapped_column(Integer, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now()
     )
+    is_free: Mapped[bool] = mapped_column(Boolean, default=False)
 
     course_id: Mapped[int] = mapped_column(ForeignKey('courses.id'), index=True, nullable=False)
 
     course: Mapped['CourseORM'] = relationship(
         'CourseORM',
         back_populates='lessons',
+    )
+
+    steps: Mapped[list['StepORM']] = relationship(
+        'StepORM',
+        back_populates='lesson',
+        cascade='all, delete-orphan',
     )

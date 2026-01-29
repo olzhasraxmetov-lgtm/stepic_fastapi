@@ -6,15 +6,17 @@ from app.models.lesson import LessonORM
 from app.models.user import UserORM
 from app.repositories.lesson import LessonRepository
 from app.schemas.lesson import LessonCreate, LessonUpdate
+from app.repositories.purchase import PurchaseRepository
 
 
 class LessonService:
-    def __init__(self, lesson_repo: LessonRepository):
+    def __init__(self, lesson_repo: LessonRepository, purchase_repo: PurchaseRepository):
         self.lesson_repo = lesson_repo
+        self.purchase_repo = purchase_repo
 
 
     async def get_lesson_or_404(self, lesson_id: int) -> LessonORM:
-        lesson_db: LessonORM = await self.lesson_repo.get_by_id(lesson_id)
+        lesson_db: LessonORM = await self.lesson_repo.get_with_steps(lesson_id, use_selection=True)
         if not lesson_db:
             raise NotFoundException(message=f'Lesson not found')
         return lesson_db

@@ -21,43 +21,45 @@ from app.services.lesson import LessonService
 from app.services.purchase import PurchaseService
 from app.services.user import UserService
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="user/login")
-
-async def service_http_user_id(request: Request):
-    return request.client.host
+from typing import Annotated
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
         yield session
 
-async def get_user_repository(db: AsyncSession = Depends(get_db)) -> UserRepository:
-    return UserRepository(session=db)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="user/login")
 
-async def get_user_service(repository: UserRepository = Depends(get_user_repository)) -> UserService:
-    return UserService(repository=repository)
+DBSession = Annotated[AsyncSession, Depends(get_db)]
 
-async def get_course_repository(db: AsyncSession = Depends(get_db)) -> CourseRepository:
-    return CourseRepository(session=db)
 
-async def get_course_service(repository: CourseRepository = Depends(get_course_repository)) -> CourseService:
-    return CourseService(course_repo=repository)
+async def service_http_user_id(request: Request):
+    return request.client.host
+
+
+async def get_user_service(db: DBSession) -> UserService:
+    return UserService(repository=UserRepository(session=db))
+
+async def get_course_service(db: DBSession) -> CourseService:
+    return CourseService(course_repo=CourseRepository(session=db))
 
 async def get_lesson_repository(db: AsyncSession = Depends(get_db)) -> LessonRepository:
     return LessonRepository(session=db)
 
-async def get_lesson_service(repository: LessonRepository = Depends(get_lesson_repository)) -> LessonService:
-    return LessonService(lesson_repo=repository)
+async def get_lesson_service(db: DBSession) -> LessonService:
+    return LessonService(lesson_repo=LessonRepository(session=db), purchase_repo=PurchaseRepository(session=db))
 
-async def get_purchase_repository(db: AsyncSession = Depends(get_db)) -> PurchaseRepository:
-    return PurchaseRepository(session=db)
 
-async def get_purchase_service(repository: PurchaseRepository = Depends(get_purchase_repository),
-                               course_repo: CourseRepository = Depends(get_course_repository)) -> PurchaseService:
-    return PurchaseService(purchase_repo=repository,
-                           course_repo=course_repo,
-                           shop_id=config.YOOKASSA_SHOP_ID,
-                           secret_key=config.YOOKASSA_API_SECRET_KEY
-                           )
+async def get_purchase_service(
+        db: DBSession
+):
+    return PurchaseService(
+        purchase_repo=PurchaseRepository(session=db),
+        course_repo=CourseRepository(session=db),
+        shop_id=config.YOOKASSA_SHOP_ID,
+        secret_key=config.YOOKASSA_API_SECRET_KEY
+    )
+
+
 
 async def get_current_user(
         token: str = Depends(oauth2_scheme),
@@ -85,8 +87,9 @@ async def get_current_user(
 
 async def validation_course_id(
         course_id: int,
-        course_repo: CourseRepository = Depends(get_course_repository)
+        db: DBSession
 ):
+    course_repo = CourseRepository(session=db)
     course = await course_repo.get_by_id(course_id)
     if not course:
         raise NotFoundException(message="Course not found")

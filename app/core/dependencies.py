@@ -1,4 +1,5 @@
 from collections.abc import AsyncGenerator
+from typing import Annotated
 
 import jwt
 from fastapi import Depends, HTTPException, status, Request
@@ -10,18 +11,21 @@ from app.core.config import config
 from app.core.database import AsyncSessionLocal
 from app.core.exceptions import ForbiddenException
 from app.core.exceptions import NotFoundException
+from app.helpers.user_role import UserRoleEnum
 from app.models.course import CourseORM
+from app.models.lesson import LessonORM
 from app.models.user import UserORM
 from app.repositories.course import CourseRepository
 from app.repositories.lesson import LessonRepository
 from app.repositories.purchase import PurchaseRepository
+from app.repositories.step import StepRepository
 from app.repositories.user import UserRepository
 from app.services.course import CourseService
 from app.services.lesson import LessonService
 from app.services.purchase import PurchaseService
+from app.services.step import StepService
 from app.services.user import UserService
 
-from typing import Annotated
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
@@ -48,6 +52,8 @@ async def get_lesson_repository(db: AsyncSession = Depends(get_db)) -> LessonRep
 async def get_lesson_service(db: DBSession) -> LessonService:
     return LessonService(lesson_repo=LessonRepository(session=db), purchase_repo=PurchaseRepository(session=db))
 
+async def get_step_service(db: DBSession) -> StepService:
+    return StepService(step_repo=StepRepository(session=db))
 
 async def get_purchase_service(
         db: DBSession
@@ -89,17 +95,29 @@ async def validation_course_id(
         course_id: int,
         db: DBSession
 ):
-    course_repo = CourseRepository(session=db)
-    course = await course_repo.get_by_id(course_id)
+    course = await CourseRepository(session=db).get_by_id(course_id)
     if not course:
         raise NotFoundException(message="Course not found")
     return course
 
 async def get_course_with_access(
-        course: CourseORM = Depends(validation_course_id),
-        user: UserORM = Depends(get_current_user)
+        course: Annotated[CourseORM, Depends(validation_course_id)],
+        user: Annotated[UserORM, Depends(get_current_user)],
 ) -> CourseORM:
-    if not (user.is_admin or course.author_id == user.id):
+    if not (user.role == UserRoleEnum.ADMIN or course.author_id == user.id):
         logger.warning(f'User {user.id} tried to access course {course.id}')
         raise ForbiddenException(message="You don't have permission")
     return course
+
+async def valid_lesson(
+        lesson_id: int,
+        course: Annotated[CourseORM, Depends(validation_course_id)],
+        db: DBSession
+) -> LessonORM:
+    repo = LessonRepository(db)
+    lesson = await repo.get_lesson_with_course(lesson_id)
+
+    if not lesson or lesson.course_id != course.id:
+        raise NotFoundException(message=f"Lesson {lesson_id} not found in course {course.id}")
+
+    return lesson

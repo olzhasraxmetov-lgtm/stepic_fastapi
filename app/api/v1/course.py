@@ -3,7 +3,8 @@ from fastapi_cache.coder import PickleCoder
 from fastapi_cache.decorator import cache
 from fastapi_limiter.depends import RateLimiter
 from starlette import status
-from app.api.v1.purchase import purchase_router
+
+from app.api.v1.lesson import lesson_router
 from app.core.dependencies import get_course_service
 from app.core.dependencies import get_current_user
 from app.core.dependencies import service_http_user_id
@@ -12,7 +13,7 @@ from app.helpers.courses.cache_utils import item_key_builder
 from app.models.user import UserORM
 from app.schemas.course import CourseResponse, CourseCreate, CourseUpdate, CourseList
 from app.services.course import CourseService
-from app.api.v1.lesson import lesson_router
+
 course_router = APIRouter(
     prefix="/courses",
 )
@@ -100,4 +101,4 @@ async def get_course(
 ):
     return await course_service.get_by_id(course_id)
 
-course_router.include_router(lesson_router, tags=["Lessons"])
+course_router.include_router(lesson_router)

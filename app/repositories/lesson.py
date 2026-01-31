@@ -1,12 +1,11 @@
 from typing import Sequence
 
-from sqlalchemy import select, delete, func
-from sqlalchemy.orm import selectinload
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload, joinedload
 
 from app.models.lesson import LessonORM
 from app.repositories.base import BaseRepository
-from app.models.course import CourseORM
 
 
 class LessonRepository(BaseRepository):
@@ -27,3 +26,12 @@ class LessonRepository(BaseRepository):
             .order_by(LessonORM.order_number)
         )
         return result.all()
+
+    async def get_lesson_with_course(self, lesson_id: int):
+        query = (
+            select(LessonORM)
+            .where(LessonORM.id == lesson_id)
+            .options(joinedload(LessonORM.course))
+        )
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()

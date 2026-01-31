@@ -25,6 +25,7 @@ from app.services.lesson import LessonService
 from app.services.purchase import PurchaseService
 from app.services.step import StepService
 from app.services.user import UserService
+from app.models.step import StepORM
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
@@ -121,3 +122,14 @@ async def valid_lesson(
         raise NotFoundException(message=f"Lesson {lesson_id} not found in course {course.id}")
 
     return lesson
+
+async def valid_step(
+        step_id: int,
+        lesson: Annotated[LessonORM, Depends(valid_lesson)],
+        db: DBSession
+) -> StepORM:
+    repo = StepRepository(db)
+    step = await repo.get_by_id(step_id)
+    if not step or step.lesson_id != lesson.id:
+        raise NotFoundException(message=f"Step {step_id} not found in lesson {lesson.id}")
+    return step

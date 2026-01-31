@@ -1,6 +1,6 @@
 from app.repositories.base import BaseRepository
 from app.models.step import StepORM
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 
 class StepRepository(BaseRepository):
@@ -13,3 +13,8 @@ class StepRepository(BaseRepository):
             .order_by(StepORM.order_number)
         )
         return result.all()
+
+    async def get_count_by_lesson(self, lesson_id: int) -> int:
+        query = select(func.count()).select_from(StepORM).where(StepORM.lesson_id == lesson_id)
+        result = await self.session.execute(query)
+        return result.scalar() or 0

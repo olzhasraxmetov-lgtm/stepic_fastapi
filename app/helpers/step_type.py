@@ -1,6 +1,6 @@
 import enum
 
-class StepType(enum.Enum):
+class StepType(str,enum.Enum):
     TEXT = "text"
     VIDEO = "video"
     QUIZ = "quiz"

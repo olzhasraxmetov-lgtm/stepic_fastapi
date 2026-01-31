@@ -1,7 +1,4 @@
-from datetime import datetime
-from decimal import Decimal
-
-from sqlalchemy import String, Text, Numeric, Boolean, DateTime, func, ForeignKey, Integer, UniqueConstraint, JSON
+from sqlalchemy import String, Text, ForeignKey, Integer, UniqueConstraint, JSON
 from sqlalchemy.orm import Mapped, mapped_column,relationship
 
 from app.core.database import Base
@@ -14,7 +11,7 @@ class StepORM(Base):
     )
     id: Mapped[int] = mapped_column(primary_key=True)
     lesson_id: Mapped[int] = mapped_column(ForeignKey('lessons.id', ondelete='CASCADE'))
-
+    title: Mapped[str] = mapped_column(String(255), nullable=True)
     step_type: Mapped[StepType] = mapped_column(String(20), default=StepType.TEXT)
     content: Mapped[str] = mapped_column(Text, nullable=True)
     video_url: Mapped[str] = mapped_column(String, nullable=True)

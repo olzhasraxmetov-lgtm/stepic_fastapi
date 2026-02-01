@@ -42,7 +42,9 @@ class StepService:
 
     async def delete_step(self, step: StepORM, lesson: LessonORM, user: UserORM) -> dict:
         await self._check_access(user, lesson)
+        order_to_remove = step.order_number
         await self.step_repo.delete(object_id=step.id)
+        await self.step_repo.reorder_steps_after_delete(lesson.id, deleted_order_id=order_to_remove)
         logger.success(f"Step {step.id} deleted from lesson {lesson.id}")
         return {"message": "success"}
 

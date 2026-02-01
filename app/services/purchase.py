@@ -86,27 +86,27 @@ class PurchaseService:
             user_id=user.id,
             course_id=course.id,
         )
-        if existing_purchase:
-            raise BadRequestException(message="Курс уже куплен")
+        if existing_purchase and existing_purchase.status == PurchaseStatus.SUCCEEDED:
+            raise BadRequestException(message='Курс уже куплен')
 
-        new_purchase = await self.purchase_repo.create_purchase(
-            user_id=user.id,
-            course_id=course.id,
-            price_paid=course.price,
-            payment_id="pending_id",
-            status=PurchaseStatus.PENDING,
-        )
+        purchase = await self.purchase_repo.upsert_purchase({
+            "user_id": user.id,
+            "course_id": course.id,
+            "price_paid": course.price,
+            "payment_id": "pending_id",
+            "status": PurchaseStatus.PENDING,
+        })
 
         await self.purchase_repo.session.flush()
 
         payment_data = await self.create_yookassa_payment(
-            order_id=new_purchase.id, # type: ignore
+            order_id=purchase.id,
             amount=course.price,
             user_email=user.email,
             description=f"Оплата курса: {course.title}"
         )
 
-        new_purchase.payment_id = payment_data["id"]
+        purchase.payment_id = payment_data["id"]
         await self.purchase_repo.session.commit()
 
         return payment_data["confirmation_url"]

@@ -8,17 +8,30 @@ from app.models.step import StepORM
 from app.helpers.user_role import UserRoleEnum
 from app.core.exceptions import ForbiddenException
 from loguru import logger
-class StepService:
-    def __init__(self, step_repo: StepRepository):
-        self.step_repo = step_repo
 
-    async def _check_access(self, user: UserORM, lesson: LessonORM):
-        if lesson.course.author_id != user.id and user.role != UserRoleEnum.ADMIN:
-            raise ForbiddenException(message="Доступ запрещен")
+from app.repositories.purchase import PurchaseRepository
+
+
+class StepService:
+    def __init__(self, step_repo: StepRepository, purchase_repo: PurchaseRepository):
+        self.step_repo = step_repo
+        self.purchase_repo = purchase_repo
+
+    async def _check_access(self, user: UserORM, lesson: LessonORM, is_write_operation: bool = False):
+        if user.role == UserRoleEnum.ADMIN or lesson.course.author_id == user.id:
+            return
+
+        if is_write_operation:
+            raise ForbiddenException(message="У вас нет прав на редактирование контента")
+
+        has_access = await self.purchase_repo.check_purchased_confirmed(user_id=user.id, course_id=lesson.course_id)
+
+        if not has_access:
+            raise ForbiddenException(message="Доступ закрыт. Оплатите курс, чтобы начать обучение.")
 
 
     async def create_step(self, lesson: LessonORM, user: UserORM, payload: StepCreate) -> StepResponse:
-        await self._check_access(user, lesson)
+        await self._check_access(user, lesson, is_write_operation=True)
 
         data = payload.model_dump()
 
@@ -32,7 +45,7 @@ class StepService:
         return StepResponse.model_validate(new_data)
 
     async def update_step(self, step: StepORM, lesson: LessonORM, user: UserORM, payload: StepUpdate):
-        await self._check_access(user, lesson)
+        await self._check_access(user, lesson, is_write_operation=True)
 
         data = payload.model_dump(exclude_unset=True)
         updated_data = await self.step_repo.update(object_id=step.id, data=data)
@@ -41,7 +54,7 @@ class StepService:
         return StepResponse.model_validate(updated_data)
 
     async def delete_step(self, step: StepORM, lesson: LessonORM, user: UserORM) -> dict:
-        await self._check_access(user, lesson)
+        await self._check_access(user, lesson, is_write_operation=True)
         order_to_remove = step.order_number
         await self.step_repo.delete(object_id=step.id)
         await self.step_repo.reorder_steps_after_delete(lesson.id, deleted_order_id=order_to_remove)
@@ -49,6 +62,6 @@ class StepService:
         return {"message": "success"}
 
     async def get_all_steps(self, lesson: LessonORM, user: UserORM) -> Sequence[StepResponse]:
-        await self._check_access(user, lesson)
+        await self._check_access(user, lesson, is_write_operation=False)
 
         return await self.step_repo.get_all_steps(lesson.id)

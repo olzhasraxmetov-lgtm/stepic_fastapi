@@ -54,7 +54,7 @@ async def get_lesson_service(db: DBSession) -> LessonService:
     return LessonService(lesson_repo=LessonRepository(session=db), purchase_repo=PurchaseRepository(session=db))
 
 async def get_step_service(db: DBSession) -> StepService:
-    return StepService(step_repo=StepRepository(session=db))
+    return StepService(step_repo=StepRepository(session=db), purchase_repo=PurchaseRepository(session=db))
 
 async def get_purchase_service(
         db: DBSession

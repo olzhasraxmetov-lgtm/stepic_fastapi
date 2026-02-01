@@ -4,7 +4,7 @@ from typing import Sequence
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-
+from sqlalchemy.dialects.postgresql import insert
 from app.helpers.purchase_status import PurchaseStatus
 from app.models.course import CourseORM
 from app.models.purchace import PurchaseORM
@@ -27,16 +27,21 @@ class PurchaseRepository(BaseRepository):
     async def add(self, purchase: PurchaseORM) -> PurchaseORM | None:
         self.session.add(purchase)
 
-    async def create_purchase(self, user_id: int, course_id: int, price_paid: Decimal, payment_id: str, status: PurchaseStatus) -> PurchaseORM | None:
-        new_purchase = PurchaseORM(
-            user_id=user_id,
-            course_id=course_id,
-            price_paid=price_paid,
-            payment_id=payment_id,
-            status=status
-        )
-        self.session.add(new_purchase)
-        return new_purchase
+    async def upsert_purchase(self, data: dict) -> PurchaseORM:
+        stmt = insert(PurchaseORM).values(**data)
+
+        stmt = stmt.on_conflict_do_update(
+            constraint="uq_purchase_user_course",
+            set_={
+                "status": data["status"],
+                "price_paid": data["price_paid"],
+                "payment_id": data["payment_id"]
+            }
+        ).returning(PurchaseORM)
+
+        result = await self.session.execute(stmt)
+        return result.scalar_one()
+
 
     async def get_payment_by_id(self, payment_id: str) -> PurchaseORM | None:
         result = await self.session.scalar(select(PurchaseORM).filter(PurchaseORM.payment_id==payment_id))
@@ -60,3 +65,13 @@ class PurchaseRepository(BaseRepository):
         )
         result = await self.session.execute(query)
         return result.scalars().all()
+
+    async def check_purchased_confirmed(self, user_id: int, course_id: int):
+        query = (
+            select(PurchaseORM)
+            .where(PurchaseORM.user_id == user_id)
+            .where(PurchaseORM.course_id == course_id)
+            .where(PurchaseORM.status == PurchaseStatus.SUCCEEDED)
+        )
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none() is not None

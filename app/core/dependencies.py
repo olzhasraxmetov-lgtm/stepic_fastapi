@@ -26,7 +26,8 @@ from app.services.purchase import PurchaseService
 from app.services.step import StepService
 from app.services.user import UserService
 from app.models.step import StepORM
-
+from app.repositories.comment import CommentRepository
+from app.services.comment import CommentService
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
@@ -36,10 +37,8 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="user/login")
 
 DBSession = Annotated[AsyncSession, Depends(get_db)]
 
-
 async def service_http_user_id(request: Request):
     return request.client.host
-
 
 async def get_user_service(db: DBSession) -> UserService:
     return UserService(repository=UserRepository(session=db))
@@ -66,6 +65,8 @@ async def get_purchase_service(
         secret_key=config.YOOKASSA_API_SECRET_KEY
     )
 
+async def get_comment_service(db: DBSession) -> CommentService:
+    return CommentService(comment_repo=CommentRepository(session=db))
 
 
 async def get_current_user(

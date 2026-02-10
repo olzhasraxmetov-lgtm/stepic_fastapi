@@ -40,6 +40,11 @@ class UserORM(Base):
         back_populates='user',
     )
 
+    comments: Mapped[list['CommentORM']] = relationship(
+        'CommentORM',
+        back_populates='author',
+    )
+
     @property
     def can_create_courses(self) -> bool:
         return self.role in [UserRoleEnum.AUTHOR, UserRoleEnum.ADMIN]

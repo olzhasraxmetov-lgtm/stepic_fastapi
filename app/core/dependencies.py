@@ -66,7 +66,14 @@ async def get_purchase_service(
     )
 
 async def get_comment_service(db: DBSession) -> CommentService:
-    return CommentService(comment_repo=CommentRepository(session=db))
+    step_repo = StepRepository(session=db)
+    purchase_repo = PurchaseRepository(session=db)
+
+    step_service = StepService(step_repo=step_repo, purchase_repo=purchase_repo)
+
+    comment_repo = CommentRepository(session=db)
+
+    return CommentService(comment_repo=comment_repo, step_service=step_service)
 
 
 async def get_current_user(

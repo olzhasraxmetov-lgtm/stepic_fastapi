@@ -6,7 +6,7 @@ from app.models.lesson import LessonORM
 from app.models.user import UserORM
 from app.models.step import StepORM
 from app.helpers.user_role import UserRoleEnum
-from app.core.exceptions import ForbiddenException
+from app.core.exceptions import ForbiddenException, NotFoundException
 from loguru import logger
 
 from app.repositories.purchase import PurchaseRepository
@@ -17,7 +17,13 @@ class StepService:
         self.step_repo = step_repo
         self.purchase_repo = purchase_repo
 
-    async def _check_access(self, user: UserORM, lesson: LessonORM, is_write_operation: bool = False):
+    async def get_step_with_details(self, step_id: int):
+        step = await self.step_repo.get_step_with_details(step_id)
+        if not step:
+            raise NotFoundException(message="Шаг не найден")
+        return step
+
+    async def _check_access(self, user: UserORM, lesson: LessonORM, is_write_operation: bool = False, error_message: str = None):
         if user.role == UserRoleEnum.ADMIN or lesson.course.author_id == user.id:
             return
 
@@ -27,7 +33,8 @@ class StepService:
         has_access = await self.purchase_repo.check_purchased_confirmed(user_id=user.id, course_id=lesson.course_id)
 
         if not has_access:
-            raise ForbiddenException(message="Доступ закрыт. Оплатите курс, чтобы начать обучение.")
+            msg = error_message or 'Доступ закрыт. Оплатите курс, чтобы начать обучение.'
+            raise ForbiddenException(message=msg)
 
 
     async def create_step(self, lesson: LessonORM, user: UserORM, payload: StepCreate) -> StepResponse:

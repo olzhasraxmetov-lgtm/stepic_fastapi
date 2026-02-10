@@ -1,11 +1,26 @@
+from sqlalchemy.orm import joinedload
+
 from app.repositories.base import BaseRepository
 from app.models.step import StepORM
+from app.models.lesson import LessonORM
 from sqlalchemy import select, func, update
 
 
 class StepRepository(BaseRepository):
     def __init__(self, session):
         super().__init__(session, StepORM)
+
+    async def get_step_with_details(self, step_id: int):
+        query = (
+            select(StepORM)
+            .where(StepORM.id == step_id)
+            .options(
+                joinedload(StepORM.lesson)
+                .joinedload(LessonORM.course)
+            )
+        )
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()
 
     async def get_all_steps(self, lesson_id: int):
         result = await self.session.scalars(

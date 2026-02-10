@@ -18,12 +18,10 @@ class CommentAuthor(BaseModel):
     id: int
     username: str
 
+    model_config = ConfigDict(from_attributes=True)
+
 class CommentResponse(CommentBase):
     id: int
-
-    user_id: int
-    step_id: int
-    course_id: int
 
     parent_id: int | None = None
 

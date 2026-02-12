@@ -24,14 +24,16 @@ class CommentResponse(CommentBase):
     id: int
 
     parent_id: int | None = None
-
+    step_title: str | None = None
     created_at: datetime
     updated_at: datetime
     author: CommentAuthor
-
+    is_edited: bool = False
+    is_deleted: bool = False
     children: list["CommentResponse"] = []
 
     model_config = ConfigDict(from_attributes=True)
+
 
 
 CommentResponse.model_rebuild()

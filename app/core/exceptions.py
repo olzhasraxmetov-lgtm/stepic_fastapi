@@ -1,14 +1,17 @@
-from fastapi import status
+from fastapi import status, HTTPException
 
-class BaseAppException(Exception):
+class BaseAppException(HTTPException):
     """Базовый класс, который умеет хранить статус и сообщение"""
     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
     message="Internal Server Error"
     log_message = None
 
     def __init__(self, message: str = None, log_message: str = None):
-        if message:
-            self.message = message
+        super().__init__(
+            status_code=self.status_code,
+            detail=message or self.message
+        )
+        self.message = message or self.message
         self.log_message = log_message or self.message
 
 class NotFoundException(BaseAppException):

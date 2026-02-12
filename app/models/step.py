@@ -21,3 +21,8 @@ class StepORM(Base):
         'LessonORM',
         back_populates='steps',
     )
+    comments: Mapped[list["CommentORM"]] = relationship(
+        "CommentORM",
+        back_populates="step",
+        cascade="all, delete-orphan"
+    )

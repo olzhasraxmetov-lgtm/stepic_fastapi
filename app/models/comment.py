@@ -17,7 +17,8 @@ class CommentORM(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'))
     course_id: Mapped[int] = mapped_column(ForeignKey('courses.id', ondelete='CASCADE'))
     content: Mapped[Text] = mapped_column(Text, nullable=False)
-
+    is_deleted: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_edited: Mapped[bool] = mapped_column(Boolean, default=False)
     parent_id: Mapped[int | None] = mapped_column(ForeignKey("comments.id", ondelete='CASCADE'), nullable=True)
 
     parent: Mapped["CommentORM | None "] = relationship("CommentORM", back_populates="children", remote_side=[id])
@@ -25,6 +26,11 @@ class CommentORM(Base):
     children: Mapped[list['CommentORM']] = relationship("CommentORM", back_populates="parent")
 
     course: Mapped['CourseORM'] = relationship("CourseORM", back_populates="comments")
+
+    step: Mapped["StepORM"] = relationship(
+        "StepORM",
+        back_populates="comments"  # Убедись, что в StepORM тоже есть back_populates или просто убери этот аргумент
+    )
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(

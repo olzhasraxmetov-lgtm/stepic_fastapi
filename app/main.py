@@ -12,7 +12,7 @@ from app.core.config import config
 from app.core.logger import setup_logging
 from fastapi_limiter import FastAPILimiter
 from app.helpers.exception_handler import add_exception_handler
-
+from app.api.v1.reactions import reactions_router
 setup_logging()
 
 
@@ -55,3 +55,4 @@ app.include_router(user_router)
 app.include_router(course_router)
 app.include_router(purchase_router)
 app.include_router(comment_router)
+app.include_router(reactions_router)

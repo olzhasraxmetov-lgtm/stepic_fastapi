@@ -5,6 +5,7 @@ import jwt
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from loguru import logger
+from requests import session
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import config
@@ -14,6 +15,7 @@ from app.core.exceptions import NotFoundException
 from app.helpers.user_role import UserRoleEnum
 from app.models.course import CourseORM
 from app.models.lesson import LessonORM
+from app.repositories.reaction import ReactionRepository
 from app.models.user import UserORM
 from app.repositories.course import CourseRepository
 from app.repositories.lesson import LessonRepository
@@ -23,6 +25,7 @@ from app.repositories.user import UserRepository
 from app.services.course import CourseService
 from app.services.lesson import LessonService
 from app.services.purchase import PurchaseService
+from app.services.reaction import ReactionService
 from app.services.step import StepService
 from app.services.user import UserService
 from app.models.step import StepORM
@@ -75,6 +78,8 @@ async def get_comment_service(db: DBSession) -> CommentService:
 
     return CommentService(comment_repo=comment_repo, step_service=step_service)
 
+async def get_reaction_service(db: DBSession) -> ReactionService:
+    return ReactionService(repository=ReactionRepository(session=db))
 
 async def get_current_user(
         token: str = Depends(oauth2_scheme),

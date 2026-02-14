@@ -3,8 +3,8 @@ from datetime import datetime
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import ForeignKey, DateTime, func, Boolean
 
-class LikesDislikesORM(Base):
-    __tablename__ = 'likesDislikes'
+class ReactionORM(Base):
+    __tablename__ = 'reactions'
 
     comment_id: Mapped[int] = mapped_column(
         ForeignKey('comments.id', ondelete='CASCADE'),

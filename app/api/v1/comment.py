@@ -7,12 +7,12 @@ from app.core.dependencies import get_current_user, validation_course_id
 from app.core.dependencies import get_comment_service
 from app.services.comment import CommentService
 from app.models.user import UserORM
-from app.schemas.comment import CommentResponse
+from app.schemas.comment import CommentFullResponse, CommentShortResponse
 from app.models.course import CourseORM
 
 comment_router = APIRouter(tags=["Comments"])
 
-@comment_router.get("/steps/{step_id}/comments", response_model=list[CommentResponse])
+@comment_router.get("/steps/{step_id}/comments", response_model=list[CommentFullResponse])
 async def get_step_comments(
         step_id: int,
         user: UserORM = Depends(get_current_user),
@@ -39,7 +39,7 @@ async def reply_to_comment(
 ):
     return await comment_service.reply_to_comment(comment_id=comment_id, user=user, content=payload.content)
 
-@comment_router.delete("/comments/{comment_id}", status_code=status.HTTP_200_OK, response_model=CommentResponse)
+@comment_router.delete("/comments/{comment_id}", status_code=status.HTTP_200_OK, response_model=CommentShortResponse)
 async def delete_comment(
         comment_id: int,
         user: UserORM = Depends(get_current_user),
@@ -56,7 +56,7 @@ async def update_comment(
 ):
     return await comment_service.update_comment(comment_id, user, payload)
 
-@comment_router.get("/courses/{course_id}/comments", response_model=list[CommentResponse])
+@comment_router.get("/courses/{course_id}/comments", response_model=list[CommentShortResponse])
 async def get_course_wide_comments(
         course_id: int,
         course: CourseORM = Depends(validation_course_id),

@@ -3,7 +3,7 @@ from app.services.step import StepService
 from app.models.user import UserORM
 from app.models.comment import CommentORM
 from app.core.exceptions import NotFoundException, ForbiddenException
-from app.schemas.comment import CommentResponse, CommentAuthor, CommentUpdate
+from app.schemas.comment import CommentFullResponse, CommentAuthor, CommentUpdate
 from app.helpers.user_role import UserRoleEnum
 
 class CommentService:
@@ -39,17 +39,28 @@ class CommentService:
 
         return existing_comment, step
 
-    def _build_comment_response(self, comment: CommentORM, author_obj=None):
+    def _build_comment_response(
+            self,
+            comment: CommentORM,
+            author_obj=None,
+            likes: int = 0, dislikes: int = 0,
+            is_liked: bool = False,
+            is_disliked: bool = False,
+    ) -> CommentFullResponse:
         author = author_obj or comment.author
-        return CommentResponse(
+        return CommentFullResponse(
             id=comment.id,
             content=comment.content,
             step_title=comment.step.title if comment.step else None,
             parent_id=comment.parent_id,
+            likes_count=likes,
+            dislikes_count=dislikes,
             created_at=comment.created_at,
             is_deleted=comment.is_deleted,
+            is_disliked_by_me=is_disliked,
             is_edited=comment.is_edited,
             updated_at=comment.updated_at,
+            is_liked_by_me=is_liked,
             author=CommentAuthor.model_validate(author),
             children=[]
         )
@@ -57,17 +68,12 @@ class CommentService:
     async def get_tree_of_comments(self, step_id: int, user: UserORM):
         step = await self.get_step_and_check_access(step_id, user, 'Оставлять комментарии могут только участники курса.')
 
-        all_comments = await self.comment_repo.get_comments_for_step(step_id)
+        all_comments = await self.comment_repo.get_comments_for_step(step_id, user.id)
         roots = {}
         replies = []
-        for comment in all_comments:
-            comment_dto = self._build_comment_response(comment)
+        for comment, likes, dislike, is_liked, is_disliked in all_comments:
+            comment_dto = self._build_comment_response(comment, likes=likes, dislikes=dislike, is_liked=is_liked, is_disliked=is_disliked)
             comment_dto.step_title = step.title
-
-            if comment_dto.parent_id is None:
-                roots[comment_dto.id] = comment_dto
-            else:
-                replies.append(comment_dto)
 
             if comment_dto.parent_id is None:
                 roots[comment_dto.id] = comment_dto
@@ -132,6 +138,13 @@ class CommentService:
             if not is_enrolled:
                 raise ForbiddenException('Доступ к обсуждениям закрыт. Купите курс.')
 
-        comments = await self.comment_repo.get_all_comments_for_course(course_id)
+        comments = await self.comment_repo.get_all_course_comments(course_id, user.id)
 
-        return [self._build_comment_response(comments) for comments in comments]
+        return [
+            self._build_comment_response(
+                comment=row[0],
+                likes=row[1],
+                dislikes=row[2]
+            )
+            for row in comments
+        ]

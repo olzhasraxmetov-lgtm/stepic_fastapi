@@ -14,10 +14,14 @@ reactions_router = APIRouter(
 async def toggle_comment_like(
     comment_id: int,
     user: UserORM = Depends(get_current_user),
-    service: ReactionService = Depends(get_reaction_service),
+    reaction_service: ReactionService = Depends(get_reaction_service),
 ):
-    pass
+    return await reaction_service.toggle_reaction(comment_id, user, is_like=True)
 
 @reactions_router.post('/comments/{comment_id}/dislike')
-async def toggle_comment_dislike(comment_id: int):
-    pass
+async def toggle_comment_dislike(
+    comment_id: int,
+    user: UserORM = Depends(get_current_user),
+    reaction_service: ReactionService = Depends(get_reaction_service),
+):
+    return await reaction_service.toggle_reaction(comment_id, user, is_like=False)

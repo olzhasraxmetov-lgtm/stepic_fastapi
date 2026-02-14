@@ -11,7 +11,7 @@ class CommentService:
         self.comment_repo = comment_repo
         self.step_service = step_service
 
-    async def _get_step_and_check_access(self, step_id: int, user: UserORM, error_msg: str):
+    async def get_step_and_check_access(self, step_id: int, user: UserORM, error_msg: str):
         step = await self.step_service.get_step_with_details(step_id)
         if not step:
             raise NotFoundException('Шаг не найден')
@@ -22,12 +22,12 @@ class CommentService:
         )
         return step
 
-    async def _get_comment_and_check_rights(self, comment_id: int, user: UserORM, check_author: bool = True):
+    async def get_comment_and_check_rights(self, comment_id: int, user: UserORM, check_author: bool = True):
         existing_comment: CommentORM = await self.comment_repo.get_by_id(comment_id)
         if not existing_comment:
             raise NotFoundException(message='Комментарий не найден')
 
-        step = await self._get_step_and_check_access(
+        step = await self.get_step_and_check_access(
             existing_comment.step_id, user, "У вас нет доступа к курсу."
         )
 
@@ -55,7 +55,7 @@ class CommentService:
         )
 
     async def get_tree_of_comments(self, step_id: int, user: UserORM):
-        step = await self._get_step_and_check_access(step_id, user, 'Оставлять комментарии могут только участники курса.')
+        step = await self.get_step_and_check_access(step_id, user, 'Оставлять комментарии могут только участники курса.')
 
         all_comments = await self.comment_repo.get_comments_for_step(step_id)
         roots = {}
@@ -81,7 +81,7 @@ class CommentService:
         return list(roots.values())
 
     async def leave_comment(self, step_id: int, user: UserORM, content: str):
-        step = await self._get_step_and_check_access(step_id, user, 'Оставлять комментарии могут только участники курса.')
+        step = await self.get_step_and_check_access(step_id, user, 'Оставлять комментарии могут только участники курса.')
 
         new_comment = CommentORM(
             step_id=step_id,
@@ -94,7 +94,7 @@ class CommentService:
         return await self.comment_repo.create_comment(new_comment)
 
     async def reply_to_comment(self, comment_id: int, user: UserORM, content: str):
-        existing_comment, step = await self._get_comment_and_check_rights(comment_id, user)
+        existing_comment, step = await self.get_comment_and_check_rights(comment_id, user)
 
         effective_parent_id = existing_comment.parent_id or existing_comment.id
 
@@ -109,7 +109,7 @@ class CommentService:
         return self._build_comment_response(created)
 
     async def soft_delete_comment(self, comment_id: int, user: UserORM):
-        comment, _ = await self._get_comment_and_check_rights(comment_id, user)
+        comment, _ = await self.get_comment_and_check_rights(comment_id, user)
 
         updated = await self.comment_repo.update(comment_id, data={
             "content": 'Сообщение удалено пользователем',
@@ -118,7 +118,7 @@ class CommentService:
         return self._build_comment_response(updated, author_obj=comment.author)
 
     async def update_comment(self, comment_id: int, user: UserORM, payload: CommentUpdate):
-        comment, _ = await self._get_comment_and_check_rights(comment_id, user)
+        comment, _ = await self.get_comment_and_check_rights(comment_id, user)
 
         update_data = payload.model_dump(exclude_unset=True)
         update_data["is_edited"] = True

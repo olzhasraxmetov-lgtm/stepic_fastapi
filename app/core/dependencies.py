@@ -78,8 +78,14 @@ async def get_comment_service(db: DBSession) -> CommentService:
 
     return CommentService(comment_repo=comment_repo, step_service=step_service)
 
-async def get_reaction_service(db: DBSession) -> ReactionService:
-    return ReactionService(repository=ReactionRepository(session=db))
+async def get_reaction_service(
+        db: DBSession,
+        comment_service: CommentService = Depends(get_comment_service),
+) -> ReactionService:
+    return ReactionService(
+        reaction_repository=ReactionRepository(session=db),
+        comment_service=comment_service,
+    )
 
 async def get_current_user(
         token: str = Depends(oauth2_scheme),

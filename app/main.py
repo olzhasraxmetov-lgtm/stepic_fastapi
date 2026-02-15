@@ -8,8 +8,10 @@ from app.api.v1.user import user_router
 from app.api.v1.course import course_router
 from app.api.v1.comment import comment_router
 from app.api.v1.purchase import purchase_router
+from app.api.v1.notifications import notification_router
 from app.core.config import config
 from app.core.logger import setup_logging
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi_limiter import FastAPILimiter
 from app.helpers.exception_handler import add_exception_handler
 from app.api.v1.reactions import reactions_router
@@ -45,6 +47,15 @@ app = FastAPI(
     version=config.APP_VERSION,
     lifespan=lifespan,
 )
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['*'],
+    allow_credentials=True,
+    allow_methods=['*'],
+    allow_headers=['*'],
+)
+
 add_exception_handler(app)
 
 @app.get('/')
@@ -56,3 +67,5 @@ app.include_router(course_router)
 app.include_router(purchase_router)
 app.include_router(comment_router)
 app.include_router(reactions_router)
+
+app.include_router(notification_router)

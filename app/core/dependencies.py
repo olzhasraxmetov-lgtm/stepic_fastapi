@@ -5,7 +5,7 @@ import jwt
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from loguru import logger
-from requests import session
+import redis.asyncio as redis_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import config
@@ -78,13 +78,22 @@ async def get_comment_service(db: DBSession) -> CommentService:
 
     return CommentService(comment_repo=comment_repo, step_service=step_service)
 
+async def get_redis():
+    client = redis_asyncio.from_url(config.REDIS_URL, decode_responses=True)
+    try:
+        yield client
+    finally:
+        await client.close()
+
 async def get_reaction_service(
         db: DBSession,
         comment_service: CommentService = Depends(get_comment_service),
+        redis_client : redis_asyncio.Redis = Depends(get_redis),
 ) -> ReactionService:
     return ReactionService(
         reaction_repository=ReactionRepository(session=db),
         comment_service=comment_service,
+        redis=redis_client,
     )
 
 async def get_current_user(

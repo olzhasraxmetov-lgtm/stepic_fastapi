@@ -5,11 +5,16 @@ from app.models.comment import CommentORM
 from app.core.exceptions import NotFoundException, ForbiddenException
 from app.schemas.comment import CommentFullResponse, CommentAuthor, CommentUpdate
 from app.helpers.user_role import UserRoleEnum
+from redis.asyncio.client import Redis
+import json
+from app.core.websocket_manager import manager
+from app.core.exceptions import BadRequestException
 
 class CommentService:
-    def __init__(self, comment_repo: CommentRepository, step_service: StepService):
+    def __init__(self, comment_repo: CommentRepository, step_service: StepService, redis: Redis):
         self.comment_repo = comment_repo
         self.step_service = step_service
+        self.redis = redis
 
     async def get_step_and_check_access(self, step_id: int, user: UserORM, error_msg: str):
         step = await self.step_service.get_step_with_details(step_id)
@@ -100,7 +105,7 @@ class CommentService:
         return await self.comment_repo.create_comment(new_comment)
 
     async def reply_to_comment(self, comment_id: int, user: UserORM, content: str):
-        existing_comment, step = await self.get_comment_and_check_rights(comment_id, user)
+        existing_comment, step = await self.get_comment_and_check_rights(comment_id, user, check_author=False)
 
         effective_parent_id = existing_comment.parent_id or existing_comment.id
 
@@ -111,7 +116,25 @@ class CommentService:
             content=content,
             parent_id=effective_parent_id
         )
+
         created = await self.comment_repo.create_comment(new_comment)
+
+        if existing_comment.user_id != user.id:
+            if existing_comment:
+                comment_reply = {
+                    "type": "new_reply",
+                    "from_user": user.username,
+                    "comment_id": existing_comment.id,
+                    "content": created.content[:50] + '...' if len(created.content) > 50 else created.content,
+                }
+                redis_key = f'notifications:user:{existing_comment.user_id}'
+                await self.redis.lpush(redis_key, json.dumps(comment_reply))
+                await manager.send_personal_message(comment_reply, existing_comment.user_id)
+                await self.redis.ltrim(redis_key, 0, 19)
+
+
+
+
         return self._build_comment_response(created)
 
     async def soft_delete_comment(self, comment_id: int, user: UserORM):

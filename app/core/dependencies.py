@@ -40,6 +40,13 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="user/login")
 
 DBSession = Annotated[AsyncSession, Depends(get_db)]
 
+async def get_redis():
+    client = redis_asyncio.from_url(config.REDIS_URL, decode_responses=True)
+    try:
+        yield client
+    finally:
+        await client.close()
+
 async def service_http_user_id(request: Request):
     return request.client.host
 
@@ -68,7 +75,7 @@ async def get_purchase_service(
         secret_key=config.YOOKASSA_API_SECRET_KEY
     )
 
-async def get_comment_service(db: DBSession) -> CommentService:
+async def get_comment_service(db: DBSession, redis_client : redis_asyncio.Redis = Depends(get_redis)) -> CommentService:
     step_repo = StepRepository(session=db)
     purchase_repo = PurchaseRepository(session=db)
 
@@ -76,14 +83,9 @@ async def get_comment_service(db: DBSession) -> CommentService:
 
     comment_repo = CommentRepository(session=db)
 
-    return CommentService(comment_repo=comment_repo, step_service=step_service)
+    return CommentService(comment_repo=comment_repo, step_service=step_service, redis=redis_client)
 
-async def get_redis():
-    client = redis_asyncio.from_url(config.REDIS_URL, decode_responses=True)
-    try:
-        yield client
-    finally:
-        await client.close()
+
 
 async def get_reaction_service(
         db: DBSession,

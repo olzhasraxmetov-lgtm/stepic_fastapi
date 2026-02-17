@@ -2,35 +2,40 @@ from collections.abc import AsyncGenerator
 from typing import Annotated
 
 import jwt
+import redis.asyncio as redis_asyncio
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from loguru import logger
-import redis.asyncio as redis_asyncio
+from redis.asyncio.client import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import config
 from app.core.database import AsyncSessionLocal
 from app.core.exceptions import ForbiddenException
 from app.core.exceptions import NotFoundException
+from app.core.websocket_manager import ConnectionManager
+from app.core.websocket_manager import manager
 from app.helpers.user_role import UserRoleEnum
 from app.models.course import CourseORM
 from app.models.lesson import LessonORM
-from app.repositories.reaction import ReactionRepository
+from app.models.step import StepORM
 from app.models.user import UserORM
+from app.repositories.comment import CommentRepository
 from app.repositories.course import CourseRepository
 from app.repositories.lesson import LessonRepository
 from app.repositories.purchase import PurchaseRepository
+from app.repositories.reaction import ReactionRepository
 from app.repositories.step import StepRepository
 from app.repositories.user import UserRepository
+from app.services.comment import CommentService
 from app.services.course import CourseService
 from app.services.lesson import LessonService
+from app.services.notification import NotificationService
 from app.services.purchase import PurchaseService
 from app.services.reaction import ReactionService
 from app.services.step import StepService
 from app.services.user import UserService
-from app.models.step import StepORM
-from app.repositories.comment import CommentRepository
-from app.services.comment import CommentService
+
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
@@ -75,7 +80,17 @@ async def get_purchase_service(
         secret_key=config.YOOKASSA_API_SECRET_KEY
     )
 
-async def get_comment_service(db: DBSession, redis_client : redis_asyncio.Redis = Depends(get_redis)) -> CommentService:
+def get_ws_manager():
+    return manager
+
+
+async def get_notification_service(
+    redis: Redis = Depends(get_redis),
+    ws_manager: ConnectionManager = Depends(get_ws_manager)
+) -> NotificationService:
+    return NotificationService(redis, ws_manager)
+
+async def get_comment_service(db: DBSession, notification_service = Depends(get_notification_service),) -> CommentService:
     step_repo = StepRepository(session=db)
     purchase_repo = PurchaseRepository(session=db)
 
@@ -83,19 +98,22 @@ async def get_comment_service(db: DBSession, redis_client : redis_asyncio.Redis 
 
     comment_repo = CommentRepository(session=db)
 
-    return CommentService(comment_repo=comment_repo, step_service=step_service, redis=redis_client)
+    return CommentService(comment_repo=comment_repo, step_service=step_service, notification_service=notification_service)
+
+
+
 
 
 
 async def get_reaction_service(
         db: DBSession,
         comment_service: CommentService = Depends(get_comment_service),
-        redis_client : redis_asyncio.Redis = Depends(get_redis),
+        notification_service = Depends(get_notification_service),
 ) -> ReactionService:
     return ReactionService(
         reaction_repository=ReactionRepository(session=db),
         comment_service=comment_service,
-        redis=redis_client,
+        notification_service=notification_service
     )
 
 async def get_current_user(

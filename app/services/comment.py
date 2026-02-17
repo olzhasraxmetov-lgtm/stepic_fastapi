@@ -1,20 +1,18 @@
-from app.repositories.comment import CommentRepository
-from app.services.step import StepService
-from app.models.user import UserORM
-from app.models.comment import CommentORM
 from app.core.exceptions import NotFoundException, ForbiddenException
-from app.schemas.comment import CommentFullResponse, CommentAuthor, CommentUpdate
 from app.helpers.user_role import UserRoleEnum
-from redis.asyncio.client import Redis
-import json
-from app.core.websocket_manager import manager
-from app.core.exceptions import BadRequestException
+from app.models.comment import CommentORM
+from app.models.user import UserORM
+from app.repositories.comment import CommentRepository
+from app.schemas.comment import CommentFullResponse, CommentAuthor, CommentUpdate
+from app.services.notification import NotificationService
+from app.services.step import StepService
+
 
 class CommentService:
-    def __init__(self, comment_repo: CommentRepository, step_service: StepService, redis: Redis):
+    def __init__(self, comment_repo: CommentRepository, step_service: StepService, notification_service: NotificationService):
         self.comment_repo = comment_repo
         self.step_service = step_service
-        self.redis = redis
+        self.notification_service = notification_service
 
     async def get_step_and_check_access(self, step_id: int, user: UserORM, error_msg: str):
         step = await self.step_service.get_step_with_details(step_id)
@@ -120,20 +118,13 @@ class CommentService:
         created = await self.comment_repo.create_comment(new_comment)
 
         if existing_comment.user_id != user.id:
-            if existing_comment:
-                comment_reply = {
-                    "type": "new_reply",
-                    "from_user": user.username,
-                    "comment_id": existing_comment.id,
-                    "content": created.content[:50] + '...' if len(created.content) > 50 else created.content,
-                }
-                redis_key = f'notifications:user:{existing_comment.user_id}'
-                await self.redis.lpush(redis_key, json.dumps(comment_reply))
-                await manager.send_personal_message(comment_reply, existing_comment.user_id)
-                await self.redis.ltrim(redis_key, 0, 19)
-
-
-
+            comment_reply = {
+                "type": "new_reply",
+                "from_user": user.username,
+                "comment_id": existing_comment.id,
+                "content": created.content[:50] + '...' if len(created.content) > 50 else created.content,
+            }
+            await self.notification_service.send_notification(target_user_id=existing_comment.user_id,payload=comment_reply)
 
         return self._build_comment_response(created)
 

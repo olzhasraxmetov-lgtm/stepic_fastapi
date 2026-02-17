@@ -1,16 +1,15 @@
-from redis.asyncio.client import Redis
-import json
+from app.core.exceptions import BadRequestException
+from app.models.user import UserORM
 from app.repositories.reaction import ReactionRepository
 from app.services.comment import CommentService
-from app.models.user import UserORM
-from app.core.websocket_manager import manager
-from app.core.exceptions import BadRequestException
+from app.services.notification import NotificationService
+
 
 class ReactionService:
-    def __init__(self, reaction_repository: ReactionRepository, comment_service: CommentService, redis: Redis):
+    def __init__(self, reaction_repository: ReactionRepository, comment_service: CommentService, notification_service: NotificationService):
         self.reaction_repository = reaction_repository
         self.comment_service = comment_service
-        self.redis = redis
+        self.notification_service = notification_service
 
     async def toggle_reaction(self, comment_id: int, user: UserORM, is_like: bool):
         comment, _ = await self.comment_service.get_comment_and_check_rights(
@@ -25,17 +24,17 @@ class ReactionService:
 
 
         if reaction == 'created' and is_like and comment.user_id != user.id:
-            notification = {
+            notification_data = {
                 'type': 'new_like',
                 "from_user": user.username,
                 "comment_id": comment.id,
                 "comment_text": comment.content[:50] + '...' if len(comment.content) > 50 else comment.content,
             }
 
-            redis_key = f'notifications:user:{comment.user_id}'
-            await self.redis.lpush(redis_key, json.dumps(notification))
-            await manager.send_personal_message(notification, comment.user_id)
-            await self.redis.ltrim(redis_key, 0, 19)
+            await self.notification_service.send_notification(
+                target_user_id=comment.user_id,
+                payload=notification_data
+            )
 
 
         return {"status": "success", "action": reaction}

@@ -121,6 +121,7 @@ class CommentService:
             comment_reply = {
                 "type": "new_reply",
                 "from_user": user.username,
+                "is_read": False,
                 "comment_id": existing_comment.id,
                 "content": created.content[:50] + '...' if len(created.content) > 50 else created.content,
             }

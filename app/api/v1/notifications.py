@@ -32,6 +32,14 @@ async def clear_notifications(
     await notification_service.clear(user.id)
     return {"status": "cleared"}
 
+@notification_router.patch("/{notification_id}read")
+async def clear_notifications_by_notification_id(
+    notification_id: str,
+    user: UserORM = Depends(get_current_user),
+    notification_service: NotificationService = Depends(get_notification_service)
+):
+    return await notification_service.mark_as_read_by_id(user_id=user.id, notification_id=notification_id)
+
 @notification_router.websocket('/ws/{user_id}')
 async def websocket_endpoint(websocket: WebSocket, user_id: int):
     await manager.connect(user_id, websocket)

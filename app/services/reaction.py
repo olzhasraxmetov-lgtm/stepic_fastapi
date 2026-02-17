@@ -28,6 +28,7 @@ class ReactionService:
                 'type': 'new_like',
                 "from_user": user.username,
                 "comment_id": comment.id,
+                "is_read": False,
                 "comment_text": comment.content[:50] + '...' if len(comment.content) > 50 else comment.content,
             }
 

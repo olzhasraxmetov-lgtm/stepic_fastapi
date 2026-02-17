@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends
-import json
-from redis.asyncio import Redis
 from starlette.websockets import WebSocket
 
-from app.models.user import UserORM
 from app.core.dependencies import get_current_user
-from app.core.dependencies import get_redis
+from app.core.dependencies import get_notification_service
 from app.core.websocket_manager import manager
+from app.models.user import UserORM
+from app.services.notification import NotificationService
+
 notification_router = APIRouter(
     prefix="/notifications",
     tags=["Notifications"]
@@ -15,28 +15,25 @@ notification_router = APIRouter(
 @notification_router.get('/')
 async def get_notifications(
         user: UserORM = Depends(get_current_user),
-        redis: Redis = Depends(get_redis)
+        notification_service: NotificationService = Depends(get_notification_service)
 ):
-    redis_key = f'notifications:user:{user.id}'
-    raw_notifications = await redis.lrange(redis_key, 0, -1)
-    notifications = [json.loads(n) for n in raw_notifications]
-
+    notifications, unread_count= await notification_service.get_data(user.id)
     return {
-        "count": len(notifications),
+        "total_count": len(notifications),
+        "unread_count": int(unread_count),
         "notifications": notifications
     }
 
 @notification_router.delete("/")
 async def clear_notifications(
     user: UserORM = Depends(get_current_user),
-    redis: Redis = Depends(get_redis)
+    notification_service: NotificationService = Depends(get_notification_service)
 ):
-    await redis.delete(f"notifications:user:{user.id}")
+    await notification_service.clear(user.id)
     return {"status": "cleared"}
 
 @notification_router.websocket('/ws/{user_id}')
 async def websocket_endpoint(websocket: WebSocket, user_id: int):
-    print(f"!!! Пытаемся подключить юзера: {user_id}")
     await manager.connect(user_id, websocket)
     try:
         while True:

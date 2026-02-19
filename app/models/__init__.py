@@ -5,6 +5,7 @@ from .purchace import PurchaseORM
 from .step import StepORM
 from .comment import CommentORM
 from .reaction import ReactionORM
+from .progress import UserCourseProgressORM
 
 
-__all__ = ["UserORM", 'CourseORM', 'LessonORM', 'PurchaseORM', 'StepORM', 'CommentORM', 'ReactionORM']
+__all__ = ["UserORM", 'CourseORM', 'LessonORM', 'PurchaseORM', 'StepORM', 'CommentORM', 'ReactionORM', 'UserCourseProgressORM']

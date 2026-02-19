@@ -15,6 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi_limiter import FastAPILimiter
 from app.helpers.exception_handler import add_exception_handler
 from app.api.v1.reactions import reactions_router
+from app.api.v1.progress import progress_router
 setup_logging()
 
 
@@ -69,3 +70,4 @@ app.include_router(comment_router)
 app.include_router(reactions_router)
 
 app.include_router(notification_router)
+app.include_router(progress_router)

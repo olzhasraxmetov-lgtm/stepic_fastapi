@@ -6,6 +6,7 @@ from .step import StepORM
 from .comment import CommentORM
 from .reaction import ReactionORM
 from .progress import UserCourseProgressORM
+from .progress import UserLessonCompletionORM
 
 
-__all__ = ["UserORM", 'CourseORM', 'LessonORM', 'PurchaseORM', 'StepORM', 'CommentORM', 'ReactionORM', 'UserCourseProgressORM']
+__all__ = ["UserORM", 'CourseORM', 'LessonORM', 'PurchaseORM', 'StepORM', 'CommentORM', 'ReactionORM', 'UserCourseProgressORM', 'UserLessonCompletionORM']

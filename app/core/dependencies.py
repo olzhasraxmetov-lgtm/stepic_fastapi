@@ -26,6 +26,7 @@ from app.repositories.lesson import LessonRepository
 from app.repositories.purchase import PurchaseRepository
 from app.repositories.reaction import ReactionRepository
 from app.repositories.step import StepRepository
+from app.repositories.progress import ProgressRepository
 from app.repositories.user import UserRepository
 from app.services.comment import CommentService
 from app.services.course import CourseService
@@ -36,7 +37,7 @@ from app.services.reaction import ReactionService
 from app.services.step import StepService
 from app.services.user import UserService
 from app.services.lesson_completion import LessonCompletionService
-from app.repositories.progress import LessonCompletionRepository
+from app.repositories.lesson_completion import LessonCompletionRepository
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
@@ -108,7 +109,7 @@ async def get_lesson_completion_service(
         purchase_service: PurchaseService = Depends(get_purchase_service),
 ) -> LessonCompletionService:
 
-    return LessonCompletionService(lesson_completion_repo=LessonCompletionRepository(session=db), purchase_service=purchase_service)
+    return LessonCompletionService(lesson_completion_repo=LessonCompletionRepository(session=db), progress_repo=ProgressRepository(session=db), purchase_service=purchase_service)
 
 
 
@@ -147,6 +148,7 @@ async def get_current_user(
     return user
 
 
+
 async def validation_course_id(
         course_id: int,
         db: DBSession
@@ -163,6 +165,20 @@ async def get_course_with_access(
     if not (user.role == UserRoleEnum.ADMIN or course.author_id == user.id):
         logger.warning(f'User {user.id} tried to access course {course.id}')
         raise ForbiddenException(message="You don't have permission")
+    return course
+
+
+async def check_course_purchase(
+        course: Annotated[CourseORM, Depends(validation_course_id)],
+        user: Annotated[UserORM, Depends(get_current_user)],
+        purchase_service: PurchaseService = Depends(get_purchase_service),
+
+) -> CourseORM:
+    is_paid = await purchase_service.check_is_course_paid(user.id, course.id)
+
+    if not is_paid:
+        raise ForbiddenException(message="Вы не купили этот курс!")
+
     return course
 
 async def valid_lesson(

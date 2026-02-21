@@ -1,23 +1,17 @@
-from app.repositories.progress import LessonCompletionRepository
+from datetime import datetime
+
+from app.repositories.lesson_completion import LessonCompletionRepository
 from app.services.purchase import PurchaseService
-from app.core.exceptions import ForbiddenException,NotFoundException
+from app.repositories.progress import ProgressRepository
+
 
 class LessonCompletionService:
-    def __init__(self, lesson_completion_repo: LessonCompletionRepository, purchase_service: PurchaseService):
+    def __init__(self,progress_repo: ProgressRepository, lesson_completion_repo: LessonCompletionRepository, purchase_service: PurchaseService):
         self.lesson_completion_repo = lesson_completion_repo
         self.purchase_service = purchase_service
-
-    async def _check_access_and_belongs(self,user_id: int, lesson_id: int, course_id: int):
-        is_course_paid = await self.purchase_service.check_is_course_paid(user_id, course_id)
-        if not is_course_paid:
-            raise ForbiddenException(message='Вы не купили курс!')
-
-        lesson = await self.lesson_completion_repo.check_lesson_belongs_to_course(lesson_id, course_id)
-        if not lesson:
-            raise NotFoundException(message='Урок не найден в данном курсе')
+        self.progress_repo = progress_repo
 
     async def mark_lesson_as_complete(self, user_id: int, lesson_id: int, course_id: int):
-        await self._check_access_and_belongs(user_id, lesson_id, course_id)
         is_already_completed = await self.lesson_completion_repo.check_exists(user_id, lesson_id)
 
         if not is_already_completed:
@@ -38,8 +32,29 @@ class LessonCompletionService:
         }
 
     async def unmark_lesson_as_complete(self, user_id: int, lesson_id: int, course_id: int):
-        await self._check_access_and_belongs(user_id, lesson_id, course_id)
         await self.lesson_completion_repo.delete_completion(user_id, lesson_id)
         return await self.lesson_completion_repo.update_course_progress(user_id, course_id, lesson_id)
 
+    async def get_progress_for_course(self, user_id: int, course_id: int):
+        main_progress = await self.progress_repo.get_progress_for_course(user_id=user_id, course_id=course_id)
+
+        completed_ids = await self.lesson_completion_repo.get_completed_lesson_ids(user_id=user_id, course_id=course_id)
+
+        if not main_progress:
+            return {
+                "course_id": course_id,
+                "current_lesson_id": 0,
+                "is_completed": False,
+                "completed_lessons": [],
+                "last_accessed": datetime.now(),
+                "progress_percentage": 0.0
+            }
+        return {
+            "course_id": main_progress.course_id,
+            "current_lesson_id": main_progress.current_lesson_id or 0,
+            "completed_lessons": completed_ids,
+            "is_completed": main_progress.is_completed,
+            "last_accessed": main_progress.last_accessed,
+            "progress_percentage": float(main_progress.progress_percentage)
+        }
 

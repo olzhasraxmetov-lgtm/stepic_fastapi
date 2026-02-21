@@ -175,3 +175,6 @@ class PurchaseService:
             raise ForbiddenException(message='У вас нет доступа к этой информаций')
 
         return PurchaseDetailResponse.model_validate(purchase)
+
+    async def check_is_course_paid(self, user_id:int,  course_id: int):
+        return await self.purchase_repo.check_purchased_confirmed(user_id, course_id)

@@ -25,7 +25,6 @@ from app.repositories.course import CourseRepository
 from app.repositories.lesson import LessonRepository
 from app.repositories.purchase import PurchaseRepository
 from app.repositories.reaction import ReactionRepository
-from app.repositories.progress import ProgressRepository
 from app.repositories.step import StepRepository
 from app.repositories.user import UserRepository
 from app.services.comment import CommentService
@@ -36,7 +35,8 @@ from app.services.purchase import PurchaseService
 from app.services.reaction import ReactionService
 from app.services.step import StepService
 from app.services.user import UserService
-from app.services.progress import ProgressService
+from app.services.lesson_completion import LessonCompletionService
+from app.repositories.lesson_completion import LessonCompletionRepository
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
@@ -103,8 +103,12 @@ async def get_comment_service(db: DBSession, notification_service = Depends(get_
     return CommentService(comment_repo=comment_repo, step_service=step_service, notification_service=notification_service)
 
 
-async def get_progress_service(db: DBSession) -> ProgressService:
-    return ProgressService(progress_repo=ProgressRepository(session=db))
+async def get_lesson_completion_service(
+        db: DBSession,
+        purchase_service: PurchaseService = Depends(get_purchase_service),
+) -> LessonCompletionService:
+
+    return LessonCompletionService(lesson_completion_repo=LessonCompletionRepository(session=db), purchase_service=purchase_service)
 
 
 

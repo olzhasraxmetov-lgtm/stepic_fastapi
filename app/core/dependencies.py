@@ -36,7 +36,7 @@ from app.services.reaction import ReactionService
 from app.services.step import StepService
 from app.services.user import UserService
 from app.services.lesson_completion import LessonCompletionService
-from app.repositories.lesson_completion import LessonCompletionRepository
+from app.repositories.progress import LessonCompletionRepository
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:

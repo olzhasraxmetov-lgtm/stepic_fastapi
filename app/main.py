@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi_limiter import FastAPILimiter
 from app.helpers.exception_handler import add_exception_handler
 from app.api.v1.reactions import reactions_router
-from app.api.v1.lesson_completion import progress_router
+from app.api.v1.progress import progress_router
 setup_logging()
 
 

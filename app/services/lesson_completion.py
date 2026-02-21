@@ -1,4 +1,4 @@
-from app.repositories.lesson_completion import LessonCompletionRepository
+from app.repositories.progress import LessonCompletionRepository
 from app.services.purchase import PurchaseService
 from app.core.exceptions import ForbiddenException,NotFoundException
 

@@ -25,6 +25,11 @@ async def complete_lesson(
 ):
     return await progress_service.mark_lesson_as_complete(user_id=user.id, lesson_id=lesson_id, course_id=course_id)
 
-@progress_router.delete('/courses/{course_id}/lessons/{lesson_id}/complete')
-async def delete_completion_for_lesson():
-    pass
+@progress_router.delete('/courses/{course_id}/lessons/{lesson_id}/complete', status_code=204)
+async def delete_completion_for_lesson(
+        course_id: int,
+        lesson_id: int,
+        user: UserORM = Depends(get_current_user),
+        progress_service: LessonCompletionService = Depends(get_lesson_completion_service),
+):
+    return await progress_service.unmark_lesson_as_complete(user_id=user.id, lesson_id=lesson_id, course_id=course_id)

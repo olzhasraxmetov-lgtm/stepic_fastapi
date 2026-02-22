@@ -34,3 +34,9 @@ class CourseList(BaseModel):
     page: int
     per_page: int
     total: int
+
+class CourseShortInfo(BaseModel):
+    id: int
+    title: str
+
+    model_config = ConfigDict(from_attributes=True)

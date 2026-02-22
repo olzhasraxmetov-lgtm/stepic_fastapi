@@ -48,3 +48,9 @@ class CourseORM(Base):
         back_populates='course',
         cascade='all, delete-orphan',
     )
+
+    progresses: Mapped[list['ProgressORM']] = relationship(
+        'UserCourseProgressORM',
+        back_populates='course',
+        cascade='all, delete-orphan',
+    )

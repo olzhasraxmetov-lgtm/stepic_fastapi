@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from app.core.database import Base
 from sqlalchemy import Boolean, ForeignKey, Numeric, DateTime, func, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
 class UserCourseProgressORM(Base):
@@ -22,6 +22,12 @@ class UserCourseProgressORM(Base):
     last_accessed: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    course: Mapped['CourseORM'] = relationship(
+        'CourseORM',
+        back_populates='progresses',
+    )
+
 
 class UserLessonCompletionORM(Base):
     __tablename__ = "user_lesson_completions"

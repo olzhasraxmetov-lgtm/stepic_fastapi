@@ -58,3 +58,5 @@ class LessonCompletionService:
             "progress_percentage": float(main_progress.progress_percentage)
         }
 
+    async def get_my_progress_for_all_courses(self, user_id: int):
+        return await self.progress_repo.get_all_progress_for_courses(user_id=user_id)

@@ -23,7 +23,7 @@ class CourseService:
     ):
         if min_price is not None and max_price is not None and min_price > max_price:
             raise BadRequestException(
-                message='Min price can\'t be higher than max price'
+                message='Минимальная цена не может быть больше максимальной цены'
             )
 
         return await self.course_repo.get_paginated_courses_with_filters(
@@ -36,13 +36,13 @@ class CourseService:
     async def _get_course_or_404(self, course_id: int) -> CourseORM:
         course = await self.course_repo.get_by_id(course_id)
         if not course:
-            raise NotFoundException(message=f'Course not found')
+            raise NotFoundException(message='Курс не найден')
         return course
 
     def _check_course_access(self, course: CourseORM, user: UserORM) -> None:
         if not (user.is_admin or course.author_id == user.id):
             logger.warning(f"Access denied: User {user.id} -> Course {course.id}")
-            raise ForbiddenException(message="You don't have permission")
+            raise ForbiddenException(message="У вас недостаточно прав")
 
     async def get_by_id(self, course_id: int) -> CourseORM:
         return await self._get_course_or_404(course_id)
@@ -89,7 +89,7 @@ class CourseService:
 
         await self.course_repo.delete_course(course_id)
         logger.success(f'Successfully deleted {course_id} by user: {current_user.id}')
-        return {"message": "Course deleted successfully"}
+        return {"message": "Курс успешно удален"}
 
 
     async def publish_course(self, current_user: UserORM, course_id: int):

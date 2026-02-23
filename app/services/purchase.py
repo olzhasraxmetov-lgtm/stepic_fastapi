@@ -131,7 +131,7 @@ class PurchaseService:
         purchase = await self.purchase_repo.get_payment_by_id(payment_id)
 
         if not purchase:
-            raise NotFoundException(message=f'Payment {payment_id} not found')
+            raise NotFoundException(message=f'Покупка не найдена')
 
         if status == PurchaseStatus.SUCCEEDED:
             purchase.status = PurchaseStatus.SUCCEEDED

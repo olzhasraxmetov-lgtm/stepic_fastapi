@@ -17,7 +17,7 @@ class LessonService:
     async def get_lesson_or_404(self, lesson_id: int) -> LessonORM:
         lesson_db: LessonORM = await self.lesson_repo.get_with_steps(lesson_id, use_selection=True)
         if not lesson_db:
-            raise NotFoundException(message=f'Lesson not found')
+            raise NotFoundException(message=f'Урок не найден')
         return lesson_db
 
     async def create_lesson(self, course: CourseORM, payload: LessonCreate):
@@ -38,7 +38,7 @@ class LessonService:
     async def delete_lesson(self, lesson: LessonORM) -> dict:
         await self.lesson_repo.delete(lesson.id)
         logger.success(f'Successfully deleted {lesson.id}')
-        return {"message": "Lesson deleted successfully"}
+        return {"message": "Урок успешно удален"}
 
     async def get_all_lessons(self, course_id: int):
         return await self.lesson_repo.get_all_lessons(course_id)

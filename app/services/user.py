@@ -21,7 +21,7 @@ class UserService:
 
         existing_user = await self.repository.get_by_email(user.email)
         if existing_user:
-            raise ConflictException(f'User with email {user.email} already exists')
+            raise ConflictException(f'Пользователь с {user.email} уже существует!')
 
         user_data = user.model_dump()
         raw_password = user_data.pop('password')
@@ -39,13 +39,13 @@ class UserService:
         user = await self.repository.get_by_username(user_name)
         if user is None:
             raise UnauthorizedException(
-                message='Incorrect username or password',
+                message='Неправильное имя пользователя или пароль',
                 log_message=f'User {user_name} not found'
             )
 
         if not verify_password(password, user.hashed_password):
             raise UnauthorizedException(
-                message="Incorrect username or password",
+                message="Неправильное имя пользователя или пароль",
                 log_message=f"Login failed: Wrong password for user {user_name}"
             )
         try:
@@ -65,7 +65,7 @@ class UserService:
         logger.debug(f'Attempting to fetch user profile by ID: {user_id}')
         user = await self.repository.get_by_id(user_id)
         if not user:
-            raise NotFoundException(f'User with ID {user_id} not found')
+            raise NotFoundException(f'Пользователь не найден')
         return UserPublic.model_validate(user)
 
     async def update_profile(self, current_user: UserORM, payload: UserUpdate) -> UserResponse:
@@ -79,7 +79,7 @@ class UserService:
         except Exception as e:
             logger.exception(f'Failed to update user profile: {current_user.id}')
             raise BaseAppException(
-                message=f'Failed to update user profile',
+                message=f'Ошибка при попытке обновить профиль',
                 log_message=f'Failed to update user profile: {current_user.id}: {str(e)}'
 
             )
@@ -90,14 +90,14 @@ class UserService:
         if payload.admin_secret_key != expected_key:
             logger.warning(f'Failed to create admin user for email: {payload.email}')
             raise ForbiddenException(
-                message=f'Invalid admin secret key',
+                message=f'Неверный ключ',
                 log_message=f'Failed to create admin user for email: {payload.email}'
             )
 
         existing_user = await self.repository.get_by_email(payload.email)
         if existing_user:
             raise ConflictException(
-                f'User with email {payload.email} already exists'
+                f'Пользователь с {payload.email} уже существует'
             )
 
         hashed_password = hash_password(payload.password)
@@ -115,7 +115,7 @@ class UserService:
         if current_user.role != UserRoleEnum.ADMIN:
             logger.warning(f'Security: User {current_user.id} attempting to change user role for ID: {user_id}')
             raise ForbiddenException(
-                message=f'Only admins can change user role',
+                message=f'Только пользователи с ролью админ могут изменять роль',
                 log_message=f'Access denied for user {user_id}',
             )
 
@@ -123,7 +123,7 @@ class UserService:
 
         if not updated_user:
             raise NotFoundException(
-                message=f'User with ID {user_id} not found',
+                message=f'Пользователь не найден',
                 log_message=f"Admin tried to update non-existent user {user_id}"
             )
 

@@ -17,7 +17,7 @@ class ReactionService:
         )
 
         if comment.user_id == user.id:
-            raise BadRequestException(message='Вы не можете лайкать свой комментарий')
+            raise BadRequestException(message='Вы не можете поставить лайк на свой комментарий')
 
         reaction = await self.reaction_repository.toggle_reaction(comment_id, user.id, is_like)
         await self.reaction_repository.session.commit()

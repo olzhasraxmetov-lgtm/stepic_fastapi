@@ -28,11 +28,19 @@ class StepService:
             return
 
         if is_write_operation:
+            logger.warning(
+                f"Write access denied: user_id={user.id} tried to modify lesson_id={lesson.id}, course_id={lesson.course_id}"
+            )
             raise ForbiddenException(message="У вас нет прав на редактирование контента")
 
         has_access = await self.purchase_repo.check_purchased_confirmed(user_id=user.id, course_id=lesson.course_id)
 
+
         if not has_access:
+            logger.warning(
+                f"Read access denied: user_id={user.id} attempted to access course_id={lesson.course_id}, "
+                f"lesson_id={lesson.id} without confirmed purchase"
+            )
             msg = error_message or 'Доступ закрыт. Оплатите курс, чтобы начать обучение.'
             raise ForbiddenException(message=msg)
 
@@ -48,7 +56,9 @@ class StepService:
 
         data['lesson_id'] = lesson.id
         new_data = await self.step_repo.create(data)
-        logger.success(f"Step successfully created")
+        logger.success(
+            f"Step created successfully: step_id={new_data.id}, lesson_id={lesson.id}, course_id={lesson.course_id}"
+        )
         return StepResponse.model_validate(new_data)
 
     async def update_step(self, step: StepORM, lesson: LessonORM, user: UserORM, payload: StepUpdate):
@@ -57,7 +67,9 @@ class StepService:
         data = payload.model_dump(exclude_unset=True)
         updated_data = await self.step_repo.update(object_id=step.id, data=data)
         await self.step_repo.session.refresh(updated_data)
-        logger.success(f"Step {step.id} update for lesson {lesson.id}")
+        logger.success(
+            f"Step updated successfully: step_id={step.id}, lesson_id={lesson.id}, course_id={lesson.course_id}"
+        )
         return StepResponse.model_validate(updated_data)
 
     async def delete_step(self, step: StepORM, lesson: LessonORM, user: UserORM) -> dict:
@@ -65,7 +77,9 @@ class StepService:
         order_to_remove = step.order_number
         await self.step_repo.delete(object_id=step.id)
         await self.step_repo.reorder_steps_after_delete(lesson.id, deleted_order_id=order_to_remove)
-        logger.success(f"Step {step.id} deleted from lesson {lesson.id}")
+        logger.success(
+            f"Step deleted successfully: step_id={step.id}, lesson_id={lesson.id}, course_id={lesson.course_id}"
+        )
         return {"message": "success"}
 
     async def get_all_steps(self, lesson: LessonORM, user: UserORM) -> Sequence[StepResponse]:

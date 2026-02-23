@@ -17,7 +17,7 @@ class UserService:
         self.repository = repository
 
     async def register(self, user: UserCreate):
-        logger.info(f'Registration attempt for email: {user.email}')
+        logger.info(f"User registration attempt: email='{user.email}'")
 
         existing_user = await self.repository.get_by_email(user.email)
         if existing_user:
@@ -28,14 +28,16 @@ class UserService:
         user_data["hashed_password"] = hash_password(raw_password)
         try:
             created_user = await self.repository.create(user_data)
-            logger.success(f'Created a new user: {user.email} with ID: {created_user.id}')
+            logger.success(
+                f"User created successfully: email='{user.email}', user_id={created_user.id}"
+            )
         except Exception:
-            logger.exception(f'Failed to create new user: {user.email}')
+            logger.exception(f"Failed to create new user: email='{user.email}'")
             raise
         return UserResponse.model_validate(created_user)
 
     async def login(self, user_name: str, password: str) -> dict:
-        logger.info(f'Login attempt for user_name: {user_name}')
+        logger.info(f"User login attempt: username='{user_name}'")
         user = await self.repository.get_by_username(user_name)
         if user is None:
             raise UnauthorizedException(
@@ -52,9 +54,13 @@ class UserService:
             access_token = create_access_token(
                 data={"sub": user.email, "username": user.username, "id": user.id},
             )
-            logger.success(f'Access token created for {user_name} with ID: {user.id}')
+            logger.success(
+                f"Access token created: username='{user_name}', user_id={user.id}"
+            )
         except Exception:
-            logger.exception(f"Unexpected error during token generation for {user_name}")
+            logger.exception(
+                f"Unexpected error during token generation for username='{user_name}'"
+            )
             raise
         return {"access_token": access_token, "token_type": "bearer"}
 
@@ -62,7 +68,7 @@ class UserService:
         return UserResponse.model_validate(current_user)
 
     async def get_public_profile_by_id(self, user_id: int) -> UserPublic:
-        logger.debug(f'Attempting to fetch user profile by ID: {user_id}')
+        logger.debug(f"Fetching public user profile: user_id={user_id}")
         user = await self.repository.get_by_id(user_id)
         if not user:
             raise NotFoundException(f'Пользователь не найден')
@@ -70,14 +76,20 @@ class UserService:
 
     async def update_profile(self, current_user: UserORM, payload: UserUpdate) -> UserResponse:
         updated_data = payload.model_dump(exclude_unset=True)
-        logger.debug(f'Updating user profile: {current_user.id}. Fields to change: {updated_data.keys()}')
+        logger.debug(
+            f"Updating user profile: user_id={current_user.id}, fields={list(updated_data.keys())}"
+        )
         try:
             current_user = await self.repository.session.merge(current_user)
             result = await self.repository.update_profile(obj=current_user, data=updated_data)
-            logger.success(f'Updated user profile successfully: ID: {current_user.id}')
+            logger.success(
+                f"User profile updated successfully: user_id={current_user.id}"
+            )
             return UserResponse.model_validate(result)
         except Exception as e:
-            logger.exception(f'Failed to update user profile: {current_user.id}')
+            logger.exception(
+                f"Failed to update user profile: user_id={current_user.id}, error={str(e)}"
+            )
             raise BaseAppException(
                 message=f'Ошибка при попытке обновить профиль',
                 log_message=f'Failed to update user profile: {current_user.id}: {str(e)}'
@@ -88,7 +100,9 @@ class UserService:
         expected_key = config.ADMIN_SECRET_KEY
 
         if payload.admin_secret_key != expected_key:
-            logger.warning(f'Failed to create admin user for email: {payload.email}')
+            logger.warning(
+                f"Admin creation denied: invalid admin_secret_key for email='{payload.email}'"
+            )
             raise ForbiddenException(
                 message=f'Неверный ключ',
                 log_message=f'Failed to create admin user for email: {payload.email}'
@@ -107,13 +121,18 @@ class UserService:
         new_admin_data['role'] = UserRoleEnum.ADMIN
 
         new_data = await self.repository.create(new_admin_data)
-        logger.success(f'Created new admin user: {new_data.email} (ID: {new_data.id})')
+        logger.success(
+            f"Admin user created: email='{new_data.email}', user_id={new_data.id}"
+        )
         return UserResponse.model_validate(new_data)
 
     async def change_user_role(self, user_id: int, current_user: UserORM, payload: UserRoleUpdate) -> UserResponse:
 
         if current_user.role != UserRoleEnum.ADMIN:
-            logger.warning(f'Security: User {current_user.id} attempting to change user role for ID: {user_id}')
+            logger.warning(
+                f"Role change denied: user_id={current_user.id} (role={current_user.role}) "
+                f"attempted to change role for target_user_id={user_id}"
+            )
             raise ForbiddenException(
                 message=f'Только пользователи с ролью админ могут изменять роль',
                 log_message=f'Access denied for user {user_id}',
@@ -127,6 +146,8 @@ class UserService:
                 log_message=f"Admin tried to update non-existent user {user_id}"
             )
 
-        logger.success(f'Admin {current_user.id} updated role for user {user_id} to {payload.role}')
+        logger.success(
+            f"User role updated: admin_user_id={current_user.id}, target_user_id={user_id}, new_role={payload.role}"
+        )
 
         return UserResponse.model_validate(updated_user)

@@ -6,7 +6,7 @@ from app.repositories.comment import CommentRepository
 from app.schemas.comment import CommentFullResponse, CommentAuthor, CommentUpdate
 from app.services.notification import NotificationService
 from app.services.step import StepService
-
+from loguru import logger
 
 class CommentService:
     def __init__(self, comment_repo: CommentRepository, step_service: StepService, notification_service: NotificationService):
@@ -18,11 +18,20 @@ class CommentService:
         step = await self.step_service.get_step_with_details(step_id)
         if not step:
             raise NotFoundException('Шаг не найден')
-        await self.step_service._check_access(
-            user=user,
-            lesson=step.lesson,
-            error_message=error_msg
-        )
+        try:
+
+            await self.step_service._check_access(
+                user=user,
+                lesson=step.lesson,
+                error_message=error_msg
+            )
+        except ForbiddenException as e:
+            logger.warning(
+                f"Access denied for user_id={user.id} to step_id={step_id}, course_id={step.lesson.course_id}. "
+                f"Reason: {error_msg}"
+            )
+            raise e
+
         return step
 
     async def get_comment_and_check_rights(self, comment_id: int, user: UserORM, check_author: bool = True):
@@ -100,7 +109,12 @@ class CommentService:
             parent_id=None
         )
 
-        return await self.comment_repo.create_comment(new_comment)
+        created_comment = await self.comment_repo.create_comment(new_comment)
+        logger.info(
+            f"New comment created: comment_id={created_comment.id}, user_id={user.id}, "
+            f"step_id={step_id}, course_id={step.lesson.course_id}"
+        )
+        return created_comment
 
     async def reply_to_comment(self, comment_id: int, user: UserORM, content: str):
         existing_comment, step = await self.get_comment_and_check_rights(comment_id, user, check_author=False)
@@ -116,6 +130,10 @@ class CommentService:
         )
 
         created = await self.comment_repo.create_comment(new_comment)
+        logger.info(
+            f"Reply created: parent_comment_id={comment_id}, new_comment_id={created.id}, "
+            f"user_id={user.id}, course_id={step.lesson.course_id}"
+        )
 
         if existing_comment.user_id != user.id:
             comment_reply = {
@@ -136,6 +154,9 @@ class CommentService:
             "content": 'Сообщение удалено пользователем',
             'is_deleted': True
         })
+        logger.info(
+            f"Comment soft-deleted by user: comment_id={comment_id}, user_id={user.id}"
+        )
         return self._build_comment_response(updated, author_obj=comment.author)
 
     async def update_comment(self, comment_id: int, user: UserORM, payload: CommentUpdate):
@@ -145,6 +166,10 @@ class CommentService:
         update_data["is_edited"] = True
 
         updated = await self.comment_repo.update(comment_id, data=update_data)
+        logger.info(
+            f"Comment updated: comment_id={comment_id}, edited_by_user_id={user.id}, "
+            f"step_id={comment.step_id}, course_id={comment.course_id}"
+        )
         return self._build_comment_response(updated, author_obj=comment.author)
 
     async def get_all_course_comments(self, course_id: int, user: UserORM):

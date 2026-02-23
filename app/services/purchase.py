@@ -27,7 +27,6 @@ class PurchaseService:
         Configuration.secret_key = self.secret_key
 
     async def create_yookassa_payment(self,*,order_id: int, amount: Decimal, user_email: str, description: str,) -> dict[str, Any]:
-
         if not self.shop_id or not self.secret_key:
             raise RuntimeError("Задайте YOOKASSA_SHOP_ID и YOOKASSA_SECRET_KEY в .env")
         payload = {
@@ -71,6 +70,11 @@ class PurchaseService:
 
         confirmation_url = getattr(payment.confirmation, "confirmation_url", None)
 
+        logger.info(
+            f"YooKassa payment created: order_id={order_id}, amount={amount}, user_email='{user_email}', "
+            f"payment_id={payment.id}, status={payment.status}"
+        )
+
         return {
             "id": payment.id,
             "status": payment.status,
@@ -109,6 +113,11 @@ class PurchaseService:
         purchase.payment_id = payment_data["id"]
         await self.purchase_repo.session.commit()
 
+        logger.info(
+            f"Purchase initiated: purchase_id={purchase.id}, user_id={user.id}, course_id={course.id}, "
+            f"status={purchase.status}, payment_id={purchase.payment_id}"
+        )
+
         return payment_data["confirmation_url"]
 
     async def webhook_logic(self, event_data: dict):
@@ -121,9 +130,12 @@ class PurchaseService:
                 payment_id=payment_object.id,
                 status=payment_object.status
             )
+            logger.info(
+                f"Webhook processed successfully: payment_id={payment_object.id}, status={payment_object.status}"
+            )
             return {"status": "ok"}
         except Exception as e:
-            logger.warning('Webhook error: %s', e)
+            logger.error(f"Webhook processing error: {e}")
             return {"status": "error", "message": str(e)}
 
 
@@ -139,6 +151,10 @@ class PurchaseService:
             purchase.status = PurchaseStatus.CANCELED
 
         await self.purchase_repo.session.commit()
+        logger.info(
+            f"Purchase status updated from webhook: payment_id={payment_id}, "
+            f"purchase_id={purchase.id}, new_status={purchase.status}"
+        )
 
     async def get_my_courses(self, user_id: int):
         return await self.purchase_repo.get_purchased_courses(user_id=user_id)

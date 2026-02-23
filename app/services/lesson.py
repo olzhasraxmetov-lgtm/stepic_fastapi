@@ -37,7 +37,9 @@ class LessonService:
 
     async def delete_lesson(self, lesson: LessonORM) -> dict:
         await self.lesson_repo.delete(lesson.id)
-        logger.success(f'Successfully deleted {lesson.id}')
+        logger.success(
+            f"Lesson deleted successfully: lesson_id={lesson.id}, course_id={lesson.course_id}"
+        )
         return {"message": "Урок успешно удален"}
 
     async def get_all_lessons(self, course_id: int):

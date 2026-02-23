@@ -3,7 +3,7 @@ from datetime import datetime
 from app.repositories.lesson_completion import LessonCompletionRepository
 from app.services.purchase import PurchaseService
 from app.repositories.progress import ProgressRepository
-
+from loguru import logger
 
 class LessonCompletionService:
     def __init__(self,progress_repo: ProgressRepository, lesson_completion_repo: LessonCompletionRepository, purchase_service: PurchaseService):
@@ -23,7 +23,10 @@ class LessonCompletionService:
             await self.lesson_completion_repo.create(data=completion_data)  # type: ignore
 
         new_progress = await self.lesson_completion_repo.update_course_progress(user_id, course_id, lesson_id)
-
+        logger.info(
+            f"Lesson marked as completed: user_id={user_id}, lesson_id={lesson_id}, course_id={course_id}, "
+            f"new_progress={new_progress}%"
+        )
         return {
             "status": "success",
             "new_percentage": new_progress,
@@ -33,7 +36,12 @@ class LessonCompletionService:
 
     async def unmark_lesson_as_complete(self, user_id: int, lesson_id: int, course_id: int):
         await self.lesson_completion_repo.delete_completion(user_id, lesson_id)
-        return await self.lesson_completion_repo.update_course_progress(user_id, course_id, lesson_id)
+        updated_course_progress = await self.lesson_completion_repo.update_course_progress(user_id, course_id, lesson_id)
+        logger.info(
+            f"Lesson completion reset: user_id={user_id}, lesson_id={lesson_id}, course_id={course_id}, "
+            f"new_progress={updated_course_progress}%"
+        )
+        return updated_course_progress
 
     async def get_progress_for_course(self, user_id: int, course_id: int):
         main_progress = await self.progress_repo.get_progress_for_course(user_id=user_id, course_id=course_id)

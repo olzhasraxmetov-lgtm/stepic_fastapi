@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 import uuid
 from redis.asyncio.client import Redis
+from loguru import logger
 from app.core.exceptions import NotFoundException
 
 
@@ -37,10 +38,17 @@ class NotificationService:
         ws_data = payload.copy()
         ws_data["unread_count"] = new_unread_count
         await self.manager.send_personal_message(ws_data, target_user_id)
+        logger.info(
+            f"Notification sent: user_id={target_user_id}, type={payload.get('type')}, "
+            f"notification_id={payload.get('id')}, unread_count={new_unread_count}"
+        )
 
     async def clear(self, user_id: int, key_prefix: str = 'notifications'):
         await self.redis.delete(f'{key_prefix}:user:{user_id}')
         await self.redis.delete(f'{key_prefix}:unread_count:{user_id}')
+        logger.info(
+            f"Notifications cleared: user_id={user_id}, key_prefix='{key_prefix}'"
+        )
 
     async def get_data(self, user_id:int, key_prefix : str = 'notifications'):
         redis_key = self._get_notif_key(user_id, key_prefix)
@@ -49,6 +57,10 @@ class NotificationService:
         raw_notifications = await self.redis.lrange(redis_key, 0, -1)
         notifications = [json.loads(n) for n in raw_notifications]
         unread_count = await self.redis.get(unread_key) or 0
+        logger.debug(
+            f"Notifications fetched: user_id={user_id}, key_prefix='{key_prefix}', "
+            f"count={len(notifications)}, unread_count={int(unread_count) if unread_count else 0}"
+        )
         return notifications, unread_count
 
     async def mark_as_read_by_id(self, user_id: int, notification_id: str, key_prefix : str = 'notifications'):
@@ -68,5 +80,11 @@ class NotificationService:
                     current_unread = await self.redis.get(unread_key)
                     if current_unread and int(current_unread) > 0:
                         await self.redis.decr(unread_key)
+                    logger.info(
+                        f"Notification marked as read: user_id={user_id}, notification_id={notification_id}"
+                    )
                 return item
+        logger.warning(
+            f"Notification not found when marking as read: user_id={user_id}, notification_id={notification_id}"
+        )
         raise NotFoundException(message="Уведомление не найдено")

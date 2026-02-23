@@ -41,29 +41,39 @@ class CourseService:
 
     def _check_course_access(self, course: CourseORM, user: UserORM) -> None:
         if not (user.is_admin or course.author_id == user.id):
-            logger.warning(f"Access denied: User {user.id} -> Course {course.id}")
+            logger.warning(
+                f"Access denied for user_id={user.id} to course_id={course.id}"
+            )
             raise ForbiddenException(message="У вас недостаточно прав")
 
     async def get_by_id(self, course_id: int) -> CourseORM:
         return await self._get_course_or_404(course_id)
 
     async def create_course(self, current_user: UserORM, payload: CourseCreate) -> CourseResponse:
-        logger.debug(f'Attempting to create a course by user: {current_user.id}')
+        logger.debug(
+            f"CourseService.create_course started for user_id={current_user.id}"
+        )
         if current_user.role not in [UserRoleEnum.AUTHOR, UserRoleEnum.ADMIN]:
-            logger.warning(f'Failed to create a course by user:  {current_user.id}')
+            logger.warning(
+                f"Course creation forbidden for user_id={current_user.id} with role={current_user.role}"
+            )
             raise ForbiddenException(
-                message='Only authors can create courses',
-                log_message=f'User {current_user.id} with role {current_user.role} tried to create course'
+                message='Только авторы могут создавать курс',
+                log_message=f'Пользователь {current_user.id} с ролью {current_user.role} попытался создать курс'
             )
         created_course = payload.model_dump()
         created_course['author_id'] = current_user.id
 
         try:
             created_course = await self.course_repo.create(created_course)
-            logger.success(f'Successfully created {payload.title} by user: {current_user.id}')
+            logger.success(
+                f"Course successfully created: title='{payload.title}', author_id={current_user.id}, course_id={created_course.id}"
+            )
             return CourseResponse.model_validate(created_course)
         except Exception as e:
-            logger.exception(f"Database error while creating course '{payload.title}': {e}")
+            logger.exception(
+                f"Database error while creating course title='{payload.title}' by user_id={current_user.id}: {e}"
+            )
         raise
 
 
@@ -79,7 +89,9 @@ class CourseService:
         updated_data = payload.model_dump(exclude_unset=True)
 
         updated_course = await self.course_repo.update(course_id, updated_data)
-        logger.success(f'Successfully updated {course_id} by user: {current_user.id}')
+        logger.success(
+            f"Course updated successfully: course_id={course_id}, updated_by_user_id={current_user.id}"
+        )
         return CourseResponse.model_validate(updated_course)
 
     async def delete_course(self, current_user: UserORM, course_id: int) -> dict:
@@ -88,7 +100,9 @@ class CourseService:
         self._check_course_access(db_course, current_user)
 
         await self.course_repo.delete_course(course_id)
-        logger.success(f'Successfully deleted {course_id} by user: {current_user.id}')
+        logger.success(
+            f"Course deleted successfully: course_id={course_id}, deleted_by_user_id={current_user.id}"
+        )
         return {"message": "Курс успешно удален"}
 
 
@@ -99,5 +113,7 @@ class CourseService:
 
         new_status = not db_course.is_published
         await self.course_repo.update(course_id, {'is_published': new_status})
-        logger.success(f'Successfully updated {course_id} by user: {current_user.id}')
+        logger.success(
+            f"Course publish status changed: course_id={course_id}, is_published={new_status}, changed_by_user_id={current_user.id}"
+        )
         return {"id": course_id, "is_published": new_status}

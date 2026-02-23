@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-
+from fastapi.responses import RedirectResponse
 from fastapi import FastAPI
 from redis import asyncio as redis_asyncio
 from fastapi_cache.backends.redis import RedisBackend
@@ -59,9 +59,12 @@ app.add_middleware(
 
 add_exception_handler(app)
 
-@app.get('/')
+@app.get('/', include_in_schema=False)
 async def root():
-    return {'message': 'Hello World'}
+    """
+    Автоматическое перенаправление на страницу документации Swagger.
+    """
+    return RedirectResponse(url='/docs')
 
 app.include_router(user_router)
 app.include_router(course_router)

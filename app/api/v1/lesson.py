@@ -19,7 +19,7 @@ lesson_router = APIRouter(
 )
 
 
-@lesson_router.get('/', tags=["Lessons"], response_model=list[LessonResponse])
+@lesson_router.get('/', tags=["Lessons"], response_model=list[LessonResponse], summary='Получить список уроков определенного курса')
 async def get_lessons(
         course: CourseORM = Depends(validation_course_id),
         lessons_service: LessonService = Depends(get_lesson_service),
@@ -27,7 +27,7 @@ async def get_lessons(
     return await lessons_service.get_all_lessons(course.id)
 
 
-@lesson_router.post('/', tags=["Lessons"])
+@lesson_router.post('/', tags=["Lessons"], summary='Создать урок для определенного курса')
 async def create_lesson(
         payload: LessonCreate,
         course: CourseORM = Depends(get_course_with_access),
@@ -35,7 +35,7 @@ async def create_lesson(
 ):
     return await lessons_service.create_lesson(payload=payload, course=course)
 
-@lesson_router.patch('/{lesson_id}', tags=["Lessons"], response_model=LessonResponse)
+@lesson_router.patch('/{lesson_id}', tags=["Lessons"], response_model=LessonResponse, summary='Обновить урок для определенного курса')
 async def update_lesson(
         payload: LessonUpdate,
         course: Annotated[CourseORM, Depends(get_course_with_access)],
@@ -44,7 +44,7 @@ async def update_lesson(
 ):
     return await lesson_service.update_lesson(payload=payload, lesson=lesson)
 
-@lesson_router.delete('/{lesson_id}', tags=["Lessons"], status_code=status.HTTP_200_OK)
+@lesson_router.delete('/{lesson_id}', tags=["Lessons"], status_code=status.HTTP_200_OK, summary='Удалить урок для определенного курса')
 async def delete_lesson(
         lesson_id: int,
         course: Annotated[CourseORM, Depends(get_course_with_access)],

@@ -12,7 +12,13 @@ notification_router = APIRouter(
     tags=["Notifications"]
 )
 
-@notification_router.get('/')
+@notification_router.get('/', summary='Получить список уведомлений',
+                         description=(
+                                 "### Типы уведомлений:\n\n"
+                                 "1. **Лайк на комментарий**: Когда другой пользователь поставил лайк на ваш комментарий.\n"
+                                 "2. **Ответ на комментарий**: Когда кто-то ответил на ваше сообщение."
+                         ))
+
 async def get_notifications(
         user: UserORM = Depends(get_current_user),
         notification_service: NotificationService = Depends(get_notification_service)
@@ -24,7 +30,7 @@ async def get_notifications(
         "notifications": notifications
     }
 
-@notification_router.delete("/")
+@notification_router.delete("/", summary='Удалить уведомления')
 async def clear_notifications(
     user: UserORM = Depends(get_current_user),
     notification_service: NotificationService = Depends(get_notification_service)
@@ -32,7 +38,8 @@ async def clear_notifications(
     await notification_service.clear(user.id)
     return {"status": "cleared"}
 
-@notification_router.patch("/{notification_id}read")
+@notification_router.patch("/{notification_id}read", summary='Удалить уведомление по id',
+                           description='Удаляет уведомление в redis по id')
 async def clear_notifications_by_notification_id(
     notification_id: str,
     user: UserORM = Depends(get_current_user),

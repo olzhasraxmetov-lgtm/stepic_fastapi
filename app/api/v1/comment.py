@@ -12,7 +12,7 @@ from app.models.course import CourseORM
 
 comment_router = APIRouter(tags=["Comments"])
 
-@comment_router.get("/steps/{step_id}/comments", response_model=list[CommentFullResponse])
+@comment_router.get("/steps/{step_id}/comments", response_model=list[CommentFullResponse], summary='Получить комментарий к определенному шагу')
 async def get_step_comments(
         step_id: int,
         user: UserORM = Depends(get_current_user),
@@ -21,7 +21,7 @@ async def get_step_comments(
 ):
     return await comment_service.get_tree_of_comments(step_id, user)
 
-@comment_router.post("/steps/{step_id}/comments")
+@comment_router.post("/steps/{step_id}/comments", summary='Создать комментарий для определенного шага')
 async def post_step_comments(
         step_id: int,
         payload: CommentCreate,
@@ -30,7 +30,7 @@ async def post_step_comments(
 ):
     return await comment_service.leave_comment(step_id=step_id, user=user, content=payload.content)
 
-@comment_router.post("/comments/{comment_id}/replies")
+@comment_router.post("/comments/{comment_id}/replies", summary='Ответить на комментарий')
 async def reply_to_comment(
         comment_id: int,
         payload: CommentCreate,
@@ -39,7 +39,10 @@ async def reply_to_comment(
 ):
     return await comment_service.reply_to_comment(comment_id=comment_id, user=user, content=payload.content)
 
-@comment_router.delete("/comments/{comment_id}", status_code=status.HTTP_200_OK, response_model=CommentShortResponse)
+@comment_router.delete("/comments/{comment_id}",
+                       status_code=status.HTTP_200_OK,
+                       response_model=CommentShortResponse,
+                       summary='Удалить комментарий к определенному шагу')
 async def delete_comment(
         comment_id: int,
         user: UserORM = Depends(get_current_user),
@@ -47,7 +50,7 @@ async def delete_comment(
 ):
     return await comment_service.soft_delete_comment(comment_id=comment_id, user=user)
 
-@comment_router.patch("/comments/{comment_id}")
+@comment_router.patch("/comments/{comment_id}", summary='Обновить комментарий к определенному шагу')
 async def update_comment(
         comment_id: int,
         payload: CommentUpdate,
@@ -56,7 +59,9 @@ async def update_comment(
 ):
     return await comment_service.update_comment(comment_id, user, payload)
 
-@comment_router.get("/courses/{course_id}/comments", response_model=list[CommentShortResponse])
+@comment_router.get("/courses/{course_id}/comments",
+                    response_model=list[CommentShortResponse],
+                    summary='Получить все комментарий к курсу')
 async def get_course_wide_comments(
         course_id: int,
         course: CourseORM = Depends(validation_course_id),

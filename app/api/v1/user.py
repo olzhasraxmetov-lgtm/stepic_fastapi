@@ -16,35 +16,35 @@ user_router = APIRouter(
 )
 
 
-@user_router.post("/register", status_code=status.HTTP_201_CREATED, response_model=UserResponse)
+@user_router.post("/register", status_code=status.HTTP_201_CREATED, response_model=UserResponse, summary='Регистрация пользователя')
 async def register_user(
         user: UserCreate,
         user_service: UserService = Depends(get_user_service)
 ):
     return await user_service.register(user)
 
-@user_router.post('/login')
+@user_router.post('/login', summary='Аутентификация пользователя')
 async def login(
         form: OAuth2PasswordRequestForm = Depends(),
         user_service: UserService = Depends(get_user_service)
 ):
     return await user_service.login(form.username, form.password)
 
-@user_router.get('/my_profile', response_model=UserResponse)
+@user_router.get('/my_profile', response_model=UserResponse, summary='Получить свой профиль')
 async def get_profile(
         user: UserORM = Depends(get_current_user),
         user_service: UserService = Depends(get_user_service),
 ):
     return await user_service.get_profile(user)
 
-@user_router.get('/{user_id}/profile', response_model=UserPublic)
+@user_router.get('/{user_id}/profile', response_model=UserPublic, summary='Получить профиль другого пользователя')
 async def get_public_profile(
         user_id: int,
         user_service: UserService = Depends(get_user_service),
 ):
     return await user_service.get_public_profile_by_id(user_id)
 
-@user_router.put('/my_profile', response_model=UserResponse)
+@user_router.put('/my_profile', response_model=UserResponse, summary='Обновить профиль')
 async def update_profile(
         user_update: UserUpdate,
         user: UserORM = Depends(get_current_user),
@@ -52,14 +52,14 @@ async def update_profile(
 ):
     return await user_service.update_profile(current_user=user, payload=user_update)
 
-@user_router.post('/register/admin', response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@user_router.post('/register/admin', response_model=UserResponse, status_code=status.HTTP_201_CREATED, summary='Регистрация пользователя с ролью Админ')
 async def register_admin(
         payload: AdminCreate,
         user_service: UserService = Depends(get_user_service),
 ):
     return await user_service.create_admin(payload=payload)
 
-@user_router.patch('/admin/{user_id}/role', response_model=UserResponse)
+@user_router.patch('/admin/{user_id}/role', response_model=UserResponse, summary='Изменить роль пользователя')
 async def update_user_role(
         user_id: int,
         payload: UserRoleUpdate,

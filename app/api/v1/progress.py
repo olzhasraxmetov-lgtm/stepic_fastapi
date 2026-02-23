@@ -13,7 +13,8 @@ progress_router = APIRouter(
     tags=["Мой прогресс"],
 )
 
-@progress_router.get("/courses/{course_id}/progress", response_model=ProgressResponseMe )
+@progress_router.get("/courses/{course_id}/progress", response_model=ProgressResponseMe,
+                     summary='Получить прогресс к конкретному курсу')
 async def get_progress(
     course: Annotated[CourseORM, Depends(check_course_purchase)],
     user: Annotated[UserORM, Depends(get_current_user)],
@@ -21,14 +22,15 @@ async def get_progress(
 ):
     return await service.get_progress_for_course(user.id, course.id)
 
-@progress_router.get('/progress/my', response_model=list[UserCourseProgressList] )
+@progress_router.get('/progress/my', response_model=list[UserCourseProgressList],
+                     summary='Получить прогресс по всем купленным курсам')
 async def get_my_progress_for_course(
     user: Annotated[UserORM, Depends(get_current_user)],
     service: LessonCompletionService = Depends(get_lesson_completion_service)
 ):
     return await service.get_my_progress_for_all_courses(user.id)
 
-@progress_router.post('/courses/{course_id}/lessons/{lesson_id}/complete')
+@progress_router.post('/courses/{course_id}/lessons/{lesson_id}/complete', summary='Отметить урок как завершенный')
 async def complete_lesson(
         lesson: Annotated[LessonORM, Depends(valid_lesson)],
         course: Annotated[CourseORM, Depends(check_course_purchase)],
@@ -37,7 +39,7 @@ async def complete_lesson(
 ):
     return await service.mark_lesson_as_complete(user_id=user.id, lesson_id=lesson.id, course_id=course.id)
 
-@progress_router.delete('/courses/{course_id}/lessons/{lesson_id}/complete', status_code=204)
+@progress_router.delete('/courses/{course_id}/lessons/{lesson_id}/complete', status_code=204, summary='Снять отметку с урока')
 async def delete_completion_for_lesson(
         lesson: Annotated[LessonORM, Depends(valid_lesson)],
         course: Annotated[CourseORM, Depends(check_course_purchase)],

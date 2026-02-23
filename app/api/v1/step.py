@@ -17,7 +17,7 @@ step_router = APIRouter(
     prefix="/{lesson_id}/steps",
 )
 
-@step_router.get('', tags=["Steps"], response_model=list[StepResponse])
+@step_router.get('', tags=["Steps"], response_model=list[StepResponse], summary='Получить список шагов для определенного урока')
 async def get_steps(
     lesson: Annotated[LessonORM, Depends(valid_lesson)],
     user: Annotated[UserORM, Depends(get_current_user)],
@@ -25,7 +25,7 @@ async def get_steps(
 ):
     return await step_service.get_all_steps(lesson, user)
 
-@step_router.post('', tags=["Steps"], response_model=StepResponse)
+@step_router.post('', tags=["Steps"], response_model=StepResponse, summary='Создать шаг для определенного урока')
 async def create_step(
         payload: StepCreate,
         lesson: Annotated[LessonORM, Depends(valid_lesson)],
@@ -34,7 +34,7 @@ async def create_step(
 ):
     return await step_service.create_step(user=user, lesson=lesson, payload=payload)
 
-@step_router.patch('/{step_id}', tags=["Steps"], response_model=StepResponse)
+@step_router.patch('/{step_id}', tags=["Steps"], response_model=StepResponse, summary='Обновить шаг для определенного урока')
 async def update_step(
         payload: StepUpdate,
         step: Annotated[StepORM, Depends(valid_step)],
@@ -44,7 +44,7 @@ async def update_step(
 ):
     return await step_service.update_step(step=step,user=user, lesson=lesson, payload=payload)
 
-@step_router.delete('/{step_id}', tags=["Steps"])
+@step_router.delete('/{step_id}', tags=["Steps"], summary='Удалить шаг для определенного урока')
 async def delete_step(
         step: Annotated[StepORM, Depends(valid_step)],
         lesson: Annotated[LessonORM, Depends(valid_lesson)],

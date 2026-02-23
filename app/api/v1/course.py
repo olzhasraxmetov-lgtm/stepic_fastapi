@@ -20,7 +20,8 @@ course_router = APIRouter(
 
 
 
-@course_router.get('/', response_model=CourseList, tags=["Courses"])
+@course_router.get('/', response_model=CourseList, tags=["Courses"], summary='Получить список курсов с пагинацией',
+                   description='<p>>Поиск по минимальной и максимальной цене</p>')
 @cache(expire=60, namespace="courses", coder=PickleCoder)
 async def get_courses(
         page: int = Query(1, ge=1),
@@ -36,7 +37,11 @@ async def get_courses(
          max_price=max_price,
      )
 
-@course_router.post('/', status_code=status.HTTP_201_CREATED, response_model=CourseResponse, dependencies=[Depends(RateLimiter(times=2, minutes=1, identifier=service_http_user_id))], tags=["Courses"])
+@course_router.post('/', status_code=status.HTTP_201_CREATED, response_model=CourseResponse,
+                    dependencies=[Depends(RateLimiter(times=2, minutes=1, identifier=service_http_user_id))],
+                    tags=["Courses"],
+                    summary='Создать курс',
+                    description='<p>Создать курс могут только пользователи с ролью админ или авторы</p>')
 async def create_course(
         payload: CourseCreate,
         user: UserORM = Depends(get_current_user),
@@ -46,7 +51,10 @@ async def create_course(
     await invalidate_cache()
     return result
 
-@course_router.get('/my/', response_model=list[CourseResponse], dependencies=[Depends(RateLimiter(times=5, seconds=10, identifier=service_http_user_id))], tags=["Courses"])
+@course_router.get('/my/', response_model=list[CourseResponse],
+                   dependencies=[Depends(RateLimiter(times=5, seconds=10, identifier=service_http_user_id))],
+                   tags=["Courses"],
+                   summary='Получить список моих курсов')
 async def get_my_courses(
         user: UserORM = Depends(get_current_user),
         course_service: CourseService = Depends(get_course_service),
@@ -54,7 +62,9 @@ async def get_my_courses(
     return await course_service.get_my_courses(user.id)
 
 @course_router.patch('/{course_id}', response_model=CourseResponse,
-                     dependencies=[Depends(RateLimiter(times=5, minutes=1, identifier=service_http_user_id))], tags=["Courses"])
+                     dependencies=[Depends(RateLimiter(times=5, minutes=1, identifier=service_http_user_id))],
+                     tags=["Courses"],
+                     summary='Обновить курс')
 async def update_course(
         payload: CourseUpdate,
         course_id: int,
@@ -71,7 +81,10 @@ async def update_course(
 
     return result
 
-@course_router.delete('/{course_id}', dependencies=[Depends(RateLimiter(times=2, minutes=1, identifier=service_http_user_id))], tags=["Courses"])
+@course_router.delete('/{course_id}',
+                      dependencies=[Depends(RateLimiter(times=2, minutes=1, identifier=service_http_user_id))],
+                      tags=["Courses"],
+                      summary='Удалить курс')
 async def delete_course(
         course_id: int,
         user: UserORM = Depends(get_current_user),
@@ -81,7 +94,10 @@ async def delete_course(
     await invalidate_cache(course_id=course_id)
     return result
 
-@course_router.post('/{course_id}/publish', dependencies=[Depends(RateLimiter(times=2, minutes=1, identifier=service_http_user_id))], tags=["Courses"])
+@course_router.post('/{course_id}/publish',
+                    dependencies=[Depends(RateLimiter(times=2, minutes=1, identifier=service_http_user_id))],
+                    tags=["Courses"],
+                    summary='Опубликовать курс')
 async def publish_course(
         course_id: int,
         user: UserORM = Depends(get_current_user),
@@ -93,7 +109,10 @@ async def publish_course(
 
 
 
-@course_router.get('/{course_id}', response_model=CourseResponse,tags=["Courses"])
+@course_router.get('/{course_id}',
+                   response_model=CourseResponse,
+                   tags=["Courses"],
+                   summary='Получить конкретный курс')
 @cache(expire=60, namespace='courses', key_builder=item_key_builder, coder=PickleCoder)
 async def get_course(
         course_id: int,
